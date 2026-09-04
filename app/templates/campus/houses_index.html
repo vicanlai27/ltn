@@ -1,0 +1,45 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Houses — Campus — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.index') }}">Campus</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>Houses</span>
+    </nav>
+
+    <header class="archive-header">
+        <div class="archive-header__eyebrow">Campus</div>
+        <h1>House Standings</h1>
+        <p class="archive-header__desc">The race for the inter-house championship.</p>
+    </header>
+
+    {% if standings %}
+        <div class="houses-list">
+            {% for house in standings %}
+                {% set rank = loop.index %}
+                {% include 'components/house_card.html' with context %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h3>No houses yet</h3>
+            <p>Houses will appear here once configured.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .houses-list {
+        display: grid; grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    @media (min-width: 768px) {
+        .houses-list { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+{% endblock %}

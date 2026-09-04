@@ -1,0 +1,79 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ video.title }} — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ video.description or video.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>{{ video.title }}</span>
+    </nav>
+
+    <article class="video-page">
+        <div class="video-page__player">
+            <video controls preload="metadata"
+                   {% if video.thumbnail %}poster="{{ media_url(video.thumbnail) }}"{% endif %}
+                   playsinline>
+                <source src="{{ media_url(video.video_url) }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <header class="video-page__header">
+            <h1>{{ video.title }}</h1>
+            <div class="video-page__meta">
+                {% if video.published_at %}
+                    <span>{{ video.published_at.strftime('%B %d, %Y') }}</span>
+                {% endif %}
+                {% if video.duration %}
+                    <span>· {{ (video.duration // 60) }}:{{ '%02d' % (video.duration % 60) }}</span>
+                {% endif %}
+                {% if video.view_count %}
+                    <span>· {{ '{:,}'.format(video.view_count) }} views</span>
+                {% endif %}
+            </div>
+            {% if video.description %}
+                <p class="video-page__desc">{{ video.description }}</p>
+            {% endif %}
+        </header>
+
+        {% if related %}
+        <section class="home-section">
+            <div class="section-header"><h2>More Videos</h2></div>
+            <div class="story-grid story-grid--3">
+                {% for video in related %}
+                    {% include 'components/video_card.html' with context %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </article>
+</div>
+
+<style>
+    .video-page__player {
+        background: black; border-radius: var(--radius);
+        overflow: hidden; margin-bottom: 24px;
+        aspect-ratio: 16/9;
+    }
+    .video-page__player video {
+        width: 100%; height: 100%; display: block;
+    }
+    .video-page__header { margin-bottom: 32px; }
+    .video-page__header h1 {
+        font-size: 28px; font-weight: 900;
+        margin-bottom: 10px; line-height: 1.25;
+    }
+    @media (min-width: 768px) { .video-page__header h1 { font-size: 36px; } }
+    .video-page__meta {
+        font-size: 14px; color: var(--muted);
+        margin-bottom: 16px;
+    }
+    .video-page__desc {
+        font-size: 16px; line-height: 1.6;
+        color: var(--text); max-width: 760px;
+    }
+</style>
+{% endblock %}

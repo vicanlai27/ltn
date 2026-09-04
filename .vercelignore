@@ -1,0 +1,11 @@
+instance/
+app/static/uploads/
+**/__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+seed_assets/
+DEBUG_NOTES.md

@@ -1,0 +1,122 @@
+{#
+  Lightbox — reusable image viewer.
+  Usage: wrap gallery images in <a data-lightbox href="..."> and include this component once per page.
+  Supports: keyboard nav, touch swipe, zoom, captions, counter.
+#}
+<div class="lightbox" id="lightbox" hidden aria-modal="true" role="dialog" aria-label="Image viewer">
+    <button class="lightbox__close" data-lightbox-close aria-label="Close">×</button>
+    <button class="lightbox__nav lightbox__nav--prev" data-lightbox-prev aria-label="Previous image">‹</button>
+    <button class="lightbox__nav lightbox__nav--next" data-lightbox-next aria-label="Next image">›</button>
+
+    <div class="lightbox__stage" data-lightbox-stage>
+        <img class="lightbox__image" data-lightbox-img alt="">
+        <div class="lightbox__spinner" data-lightbox-spinner hidden>
+            <div class="lightbox__spinner-dot"></div>
+        </div>
+    </div>
+
+    <div class="lightbox__footer">
+        <div class="lightbox__counter" data-lightbox-counter></div>
+        <div class="lightbox__caption" data-lightbox-caption></div>
+        <button class="lightbox__zoom" data-lightbox-zoom aria-label="Toggle zoom">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></svg>
+        </button>
+    </div>
+</div>
+
+<style>
+    .lightbox {
+        position: fixed; inset: 0; z-index: 1000;
+        background: rgba(10, 31, 68, 0.96);
+        display: flex; flex-direction: column;
+        animation: lightbox-in 0.2s ease;
+    }
+    .lightbox[hidden] { display: none; }
+    @keyframes lightbox-in { from { opacity: 0; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { .lightbox { animation: none; } }
+
+    .lightbox__close {
+        position: absolute; top: 16px; right: 16px;
+        background: rgba(255,255,255,0.1); color: white;
+        border: none; width: 44px; height: 44px;
+        border-radius: 50%; font-size: 28px;
+        cursor: pointer; z-index: 10;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .lightbox__close:hover { background: rgba(255,255,255,0.2); }
+
+    .lightbox__nav {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        background: rgba(255,255,255,0.1); color: white;
+        border: none; width: 48px; height: 48px;
+        border-radius: 50%; font-size: 32px;
+        cursor: pointer; z-index: 10;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .lightbox__nav:hover { background: rgba(255,255,255,0.2); }
+    .lightbox__nav--prev { left: 16px; }
+    .lightbox__nav--next { right: 16px; }
+    .lightbox__nav:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .lightbox__stage {
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        padding: 60px 80px; position: relative;
+        overflow: hidden;
+    }
+    @media (max-width: 768px) {
+        .lightbox__stage { padding: 60px 16px; }
+        .lightbox__nav { width: 40px; height: 40px; font-size: 24px; }
+        .lightbox__nav--prev { left: 8px; }
+        .lightbox__nav--next { right: 8px; }
+    }
+
+    .lightbox__image {
+        max-width: 100%; max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+        cursor: zoom-in;
+        user-select: none;
+    }
+    .lightbox__image.zoomed {
+        cursor: zoom-out;
+        transform: scale(1.8);
+    }
+
+    .lightbox__spinner {
+        position: absolute;
+        width: 40px; height: 40px;
+    }
+    .lightbox__spinner-dot {
+        width: 100%; height: 100%;
+        border: 3px solid rgba(255,255,255,0.2);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .lightbox__footer {
+        padding: 16px 24px;
+        display: flex; align-items: center; gap: 16px;
+        color: white; background: rgba(0,0,0,0.3);
+    }
+    .lightbox__counter {
+        font-size: 13px; font-weight: 600;
+        color: var(--accent); white-space: nowrap;
+    }
+    .lightbox__caption {
+        flex: 1; font-size: 14px;
+        color: rgba(255,255,255,0.9);
+        text-align: center;
+    }
+    .lightbox__zoom {
+        background: rgba(255,255,255,0.1); color: white;
+        border: none; width: 36px; height: 36px;
+        border-radius: 50%; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .lightbox__zoom:hover { background: rgba(255,255,255,0.2); }
+    .lightbox__zoom svg { width: 18px; height: 18px; }
+</style>
+
+<script src="{{ url_for('static', filename='js/lightbox.js') }}" defer></script>

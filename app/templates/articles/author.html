@@ -1,0 +1,60 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ profile.display_name }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="author-header">
+        {% if profile.avatar %}
+            <img src="{{ media_url(profile.avatar) }}" alt="" class="author-header__avatar">
+        {% else %}
+            <div class="author-header__avatar author-header__avatar--placeholder">{{ profile.display_name[0]|upper }}</div>
+        {% endif %}
+        <div class="author-header__body">
+            <h1>{{ profile.display_name }}</h1>
+            {% if profile.school_role %}
+                <p class="author-header__role">{{ profile.school_role }}</p>
+            {% endif %}
+            {% if profile.bio %}
+                <p class="author-header__bio">{{ profile.bio }}</p>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if articles.items %}
+        <div class="story-grid story-grid--3">
+            {% for article in articles.items %}
+                {% include 'components/story_card.html' with context %}
+            {% endfor %}
+        </div>
+        {% with pagination=articles, endpoint='public.author', kwargs={'slug': profile.slug} %}
+            {% include 'components/pagination.html' %}
+        {% endwith %}
+    {% else %}
+        <div class="empty-state">
+            <h3>No published stories yet</h3>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .author-header {
+        display: flex; gap: 24px; align-items: center;
+        margin-bottom: 32px; padding-bottom: 24px;
+        border-bottom: 1px solid var(--border);
+    }
+    .author-header__avatar {
+        width: 96px; height: 96px; border-radius: 50%;
+        object-fit: cover; flex-shrink: 0;
+    }
+    .author-header__avatar--placeholder {
+        background: var(--brand-primary); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif;
+        font-size: 40px; font-weight: 700;
+    }
+    .author-header h1 { font-size: 32px; margin-bottom: 4px; }
+    .author-header__role { color: var(--brand-primary); font-weight: 500; margin-bottom: 8px; }
+    .author-header__bio { color: var(--muted); max-width: 640px; }
+</style>
+{% endblock %}

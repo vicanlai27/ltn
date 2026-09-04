@@ -1,0 +1,72 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{% if editing %}Edit Fixture{% else %}New Fixture{% endif %} — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<h1 style="margin-bottom: 24px; color: var(--brand-primary);">
+    {% if editing %}Edit Fixture{% else %}New Fixture{% endif %}
+</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="card" style="margin-bottom: 24px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.home_team_id.label }}
+                {{ form.home_team_id(class="form-control") }}
+                {% for error in form.home_team_id.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.away_team_id.label }}
+                {{ form.away_team_id(class="form-control") }}
+                {% for error in form.away_team_id.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.competition.label }}
+                {{ form.competition(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.venue.label }}
+                {{ form.venue(class="form-control") }}
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.match_date.label }}
+                {{ form.match_date(class="form-control") }}
+                {% for error in form.match_date.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.status.label }}
+                {{ form.status(class="form-control") }}
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.home_score.label }}
+                {{ form.home_score(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.away_score.label }}
+                {{ form.away_score(class="form-control") }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            {{ form.notes.label }}
+            {{ form.notes(class="form-control", rows=3) }}
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+        <button type="submit" class="btn btn-primary">Save Fixture</button>
+        <a href="{{ url_for('admin.fixtures_list') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

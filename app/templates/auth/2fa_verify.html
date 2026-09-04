@@ -1,0 +1,30 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Two-factor verification — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 560px;">
+    <div class="section-header">
+        <h1>Verify your sign-in</h1>
+    </div>
+    <p class="text-muted" style="margin-bottom: 24px;">Enter the six-digit code from your authenticator app, or use one of your backup codes.</p>
+    <form method="post" class="card" style="margin-bottom: 20px;">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.code.label }}
+            {{ form.code(class="form-control", inputmode="numeric", autocomplete="one-time-code", maxlength="6") }}
+            {% for error in form.code.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+    <form method="post" class="card">
+        {{ backup_form.hidden_tag() }}
+        <div class="form-group">
+            {{ backup_form.backup_code.label }}
+            {{ backup_form.backup_code(class="form-control", autocomplete="one-time-code") }}
+            {% for error in backup_form.backup_code.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        {{ backup_form.submit(class="btn btn-secondary") }}
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Videos — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="color: var(--brand-primary);">Videos</h1>
+    <a href="{{ url_for('admin.videos_new') }}" class="btn btn-primary">+ New Video</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+    {% for video in videos %}
+    <div class="card">
+        {% if video.thumbnail %}
+            <img src="{{ media_url(video.thumbnail) }}" alt="" style="width: 100%; height: 140px; object-fit: cover; border-radius: var(--radius); margin-bottom: 10px;">
+        {% endif %}
+
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <h3 style="margin: 0;">{{ video.title }}</h3>
+            {% if video.published_at %}
+                <span class="badge badge-info">Published</span>
+            {% else %}
+                <span class="badge badge-info">Draft</span>
+            {% endif %}
+            {% if video.duration and video.duration <= 90 %}
+                <span class="badge badge-info">Short</span>
+            {% endif %}
+        </div>
+
+        <div class="text-muted" style="font-size: 13px; margin-bottom: 8px;">
+            <code>{{ video.slug }}</code>
+            {% if video.duration %}· {{ (video.duration // 60) }}:{{ '%02d' % (video.duration % 60) }}{% endif %}
+            · {{ '{:,}'.format(video.view_count or 0) }} views
+        </div>
+
+        {% if video.description %}
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">{{ video.description|truncate(100) }}</p>
+        {% endif %}
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            {% if video.published_at %}
+                <a href="{{ url_for('media.video_show', slug=video.slug) }}" class="btn btn-ghost" style="padding: 6px 12px; font-size: 13px;">View</a>
+            {% endif %}
+            <a href="{{ url_for('admin.videos_edit', video_id=video.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+            <form method="POST" action="{{ url_for('admin.videos_delete', video_id=video.id) }}" style="display: inline;" onsubmit="return confirm('Delete this video? This cannot be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <h3>No videos yet</h3>
+            <p>Upload the first video to get started.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

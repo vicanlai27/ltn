@@ -1,0 +1,56 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{% if editing %}Edit House{% else %}New House{% endif %} — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<h1 style="margin-bottom: 24px; color: var(--brand-primary);">
+    {% if editing %}Edit: {{ house.name }}{% else %}New House{% endif %}
+</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="card" style="margin-bottom: 24px;">
+        <div class="form-group">
+            {{ form.name.label }}
+            {{ form.name(class="form-control") }}
+            {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", rows=4) }}
+        </div>
+
+        <div class="form-group">
+            {{ form.color.label }}
+            <div style="display: flex; gap: 8px; align-items: center;">
+                {{ form.color(class="form-control", placeholder="#0B3C8C", style="flex: 1;") }}
+                <input type="color" value="{{ form.color.data or '#0B3C8C' }}" onchange="this.previousElementSibling.value = this.value" style="width: 40px; height: 40px; border: none; cursor: pointer;">
+            </div>
+        </div>
+
+        <div class="form-group">
+            {{ form.logo.label }}
+            {{ form.logo(class="form-control") }}
+            {% if editing and house.logo %}
+                <div style="margin-top: 12px;">
+                    <img src="{{ media_url(house.logo) }}" alt="" style="max-width: 120px; border-radius: var(--radius);">
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 8px;">
+                {{ form.is_active() }}
+                <span>Active</span>
+            </label>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+        <button type="submit" class="btn btn-primary">Save House</button>
+        <a href="{{ url_for('admin.houses_list') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

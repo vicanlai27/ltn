@@ -1,0 +1,51 @@
+{#
+  Accessible breadcrumb component.
+  Expects: items = [{'label': 'Home', 'url': '/'}, {'label': 'Politics', 'url': '/category/politics'}, ...]
+  The last item is treated as current page (no link).
+#}
+{% if items %}
+<nav aria-label="Breadcrumb" class="breadcrumb-nav">
+    <ol class="breadcrumb-nav__list">
+        {% for item in items %}
+            <li class="breadcrumb-nav__item">
+                {% if loop.last %}
+                    <span aria-current="page" class="breadcrumb-nav__current">{{ item.label }}</span>
+                {% else %}
+                    <a href="{{ item.url }}" class="breadcrumb-nav__link">{{ item.label }}</a>
+                    <span class="breadcrumb-nav__sep" aria-hidden="true">/</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+</nav>
+
+<style>
+    .breadcrumb-nav {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 20px;
+    }
+    .breadcrumb-nav__list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .breadcrumb-nav__link {
+        color: var(--muted);
+    }
+    .breadcrumb-nav__link:hover {
+        color: var(--brand-primary);
+    }
+    .breadcrumb-nav__current {
+        color: var(--text);
+        font-weight: 500;
+    }
+    .breadcrumb-nav__sep {
+        color: var(--border);
+        margin: 0 2px;
+    }
+</style>
+{% endif %}

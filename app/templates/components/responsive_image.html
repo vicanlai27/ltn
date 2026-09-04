@@ -1,0 +1,68 @@
+{#
+  Responsive image component with srcset, lazy loading, and blur-up placeholder.
+  Usage: {% include 'components/responsive_image.html' with context %}
+  Expects:
+    - image_path: relative path to image
+    - alt: alt text
+    - size_hint: 'default' | 'hero' | 'article' | 'thumbnail' | 'gallery'
+    - eager: bool (for LCP image)
+    - aspect_ratio: CSS aspect-ratio (default '16/9')
+#}
+{% set size_hint = size_hint|default('default') %}
+{% set eager = eager|default(false) %}
+{% set aspect_ratio = aspect_ratio|default('16/9') %}
+
+{% if image_path %}
+<figure class="responsive-image" style="aspect-ratio: {{ aspect_ratio }};">
+    {% set srcset = responsive_srcset(image_path) %}
+    {% if srcset %}
+        <img srcset="{{ srcset }}"
+             sizes="{{ responsive_sizes(size_hint) }}"
+             src="{{ media_url(image_path) }}"
+             alt="{{ alt or '' }}"
+             {% if eager %}
+                 fetchpriority="high"
+                 decoding="sync"
+             {% else %}
+                 loading="lazy"
+                 decoding="async"
+             {% endif %}
+             width="800"
+             height="{{ (800 / (aspect_ratio.split('/')[0]|float / aspect_ratio.split('/')[1]|float))|int }}">
+    {% else %}
+        <img src="{{ media_url(image_path) }}"
+             alt="{{ alt or '' }}"
+             {% if eager %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
+             decoding="{% if eager %}sync{% else %}async{% endif %}"
+             width="800"
+             height="{{ (800 / (aspect_ratio.split('/')[0]|float / aspect_ratio.split('/')[1]|float))|int }}">
+    {% endif %}
+    {% if caption %}
+        <figcaption>{{ caption }}</figcaption>
+    {% endif %}
+</figure>
+
+<style>
+    .responsive-image {
+        position: relative;
+        overflow: hidden;
+        background: var(--surface);
+        margin: 0;
+    }
+    .responsive-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: opacity 0.3s ease;
+    }
+    .responsive-image figcaption {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        padding: 8px 12px;
+        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+        color: white;
+        font-size: 13px;
+        font-style: italic;
+    }
+</style>
+{% endif %}

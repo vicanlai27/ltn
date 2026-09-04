@@ -1,0 +1,56 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Podcast Episodes — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="color: var(--brand-primary);">Podcast Episodes</h1>
+    <a href="{{ url_for('admin.podcasts_new') }}" class="btn btn-primary">+ New Episode</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+    {% for episode in episodes %}
+    <div class="card">
+        {% if episode.cover_image %}
+            <img src="{{ media_url(episode.cover_image) }}" alt="" style="width: 100%; height: 140px; object-fit: cover; border-radius: var(--radius); margin-bottom: 10px;">
+        {% endif %}
+
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <h3 style="margin: 0;">
+                {% if episode.episode_number %}#{{ episode.episode_number }} — {% endif %}{{ episode.title }}
+            </h3>
+            {% if episode.published_at %}
+                <span class="badge badge-info">Published</span>
+            {% else %}
+                <span class="badge badge-info">Draft</span>
+            {% endif %}
+        </div>
+
+        <div class="text-muted" style="font-size: 13px; margin-bottom: 8px;">
+            <code>{{ episode.slug }}</code>
+            {% if episode.duration %}· {{ (episode.duration // 60) }}:{{ '%02d' % (episode.duration % 60) }}{% endif %}
+        </div>
+
+        {% if episode.description %}
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">{{ episode.description|truncate(100) }}</p>
+        {% endif %}
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            {% if episode.published_at %}
+                <a href="{{ url_for('media.podcast_show', slug=episode.slug) }}" class="btn btn-ghost" style="padding: 6px 12px; font-size: 13px;">View</a>
+            {% endif %}
+            <a href="{{ url_for('admin.podcasts_edit', episode_id=episode.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+            <form method="POST" action="{{ url_for('admin.podcasts_delete', episode_id=episode.id) }}" style="display: inline;" onsubmit="return confirm('Delete this episode? This cannot be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <h3>No episodes yet</h3>
+            <p>Upload the first episode to get started.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

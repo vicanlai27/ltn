@@ -1,0 +1,143 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ episode.title }} — Lavisco Voices — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ episode.description or episode.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('media.podcast_index') }}">Lavisco Voices</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>{{ episode.title|truncate(40) }}</span>
+    </nav>
+
+    <article class="podcast-page">
+        <div class="podcast-page__header">
+            {% if episode.cover_image %}
+                <img src="{{ media_url(episode.cover_image) }}" alt="" class="podcast-page__cover">
+            {% else %}
+                <div class="podcast-page__cover podcast-page__cover--placeholder">🎙️</div>
+            {% endif %}
+            <div class="podcast-page__info">
+                <div class="podcast-page__brand">🎙️ Lavisco Voices</div>
+                {% if episode.episode_number %}
+                    <div class="podcast-page__ep">Episode {{ episode.episode_number }}</div>
+                {% endif %}
+                <h1>{{ episode.title }}</h1>
+                <div class="podcast-page__meta">
+                    {% if episode.published_at %}
+                        <span>{{ episode.published_at.strftime('%B %d, %Y') }}</span>
+                    {% endif %}
+                    {% if episode.duration %}
+                        <span>· {{ (episode.duration // 60) }} min</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% set audio_url = episode.audio_url %}
+        {% set title = 'Listen: ' ~ episode.title %}
+        {% include 'components/audio_player.html' with context %}
+
+        {% if episode.description %}
+            <div class="podcast-page__body">
+                {{ episode.description|safe }}
+            </div>
+        {% endif %}
+
+        <div class="podcast-page__subscribe">
+            <h3>Subscribe</h3>
+            <p>Get new episodes as soon as they're released.</p>
+            <a href="{{ episode.audio_url }}" class="btn btn-secondary" download>Download Episode</a>
+            <a href="{{ url_for('public.rss') }}" class="btn btn-ghost">RSS Feed</a>
+        </div>
+
+        {% if others %}
+        <section class="home-section">
+            <div class="section-header"><h2>More Episodes</h2></div>
+            <div class="podcast-list">
+                {% for ep in others %}
+                    <a href="{{ url_for('media.podcast_show', slug=ep.slug) }}" class="podcast-ep">
+                        {% if ep.cover_image %}
+                            <img src="{{ media_url(ep.cover_image) }}" alt="" class="podcast-ep__cover">
+                        {% else %}
+                            <div class="podcast-ep__cover podcast-ep__cover--placeholder">🎙️</div>
+                        {% endif %}
+                        <div class="podcast-ep__body">
+                            {% if ep.episode_number %}<div class="podcast-ep__num">Ep. {{ ep.episode_number }}</div>{% endif %}
+                            <h3 class="podcast-ep__title">{{ ep.title }}</h3>
+                            <div class="podcast-ep__meta">
+                                {% if ep.published_at %}<span>{{ ep.published_at.strftime('%b %d, %Y') }}</span>{% endif %}
+                                {% if ep.duration %}<span>· {{ (ep.duration // 60) }} min</span>{% endif %}
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </article>
+</div>
+
+<style>
+    .podcast-page__header {
+        display: flex; gap: 24px; align-items: flex-start;
+        margin-bottom: 24px;
+    }
+    .podcast-page__cover {
+        width: 200px; height: 200px; border-radius: var(--radius);
+        object-fit: cover; flex-shrink: 0;
+    }
+    .podcast-page__cover--placeholder {
+        background: var(--brand-secondary); color: var(--accent);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 72px;
+    }
+    .podcast-page__brand {
+        font-size: 12px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.15em;
+        color: var(--accent); margin-bottom: 8px;
+    }
+    .podcast-page__ep {
+        font-size: 13px; font-weight: 600;
+        color: var(--brand-primary); margin-bottom: 6px;
+    }
+    .podcast-page__header h1 {
+        font-size: 32px; font-weight: 900;
+        line-height: 1.2; margin-bottom: 10px;
+    }
+    @media (min-width: 768px) { .podcast-page__header h1 { font-size: 40px; } }
+    .podcast-page__meta {
+        font-size: 14px; color: var(--muted);
+    }
+    @media (max-width: 600px) {
+        .podcast-page__header { flex-direction: column; }
+        .podcast-page__cover { width: 100%; max-width: 280px; margin: 0 auto; }
+    }
+
+    .podcast-page__body {
+        font-size: 16px; line-height: 1.7;
+        max-width: 720px; margin: 32px 0;
+    }
+    .podcast-page__body p { margin-bottom: 1em; }
+
+    .podcast-page__subscribe {
+        padding: 24px; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--radius);
+        margin: 32px 0;
+    }
+    .podcast-page__subscribe h3 {
+        font-family: 'Inter', sans-serif;
+        font-size: 14px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--accent); margin-bottom: 8px;
+    }
+    .podcast-page__subscribe p {
+        color: var(--muted); font-size: 14px;
+        margin-bottom: 16px;
+    }
+    .podcast-page__subscribe .btn { margin-right: 8px; }
+</style>
+{% endblock %}

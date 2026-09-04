@@ -1,0 +1,188 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{% if editing %}Edit Theme{% else %}New Theme{% endif %} — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<h1 style="margin-bottom: 24px; color: var(--brand-primary);">
+    {% if editing %}Edit: {{ theme.name }}{% else %}New Theme{% endif %}
+</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Basic Info</h2>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.name.label }}
+                {{ form.name(class="form-control") }}
+                {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.theme_type.label }}
+                {{ form.theme_type(class="form-control") }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            {{ form.slug.label }}
+            {{ form.slug(class="form-control", placeholder="auto-generated-if-blank") }}
+            <small class="text-muted">{{ form.slug.description }}</small>
+        </div>
+
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", rows=2) }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.start_date.label }}
+                {{ form.start_date(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.end_date.label }}
+                {{ form.end_date(class="form-control") }}
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Colors</h2>
+        <p class="text-muted" style="font-size: 13px; margin-bottom: 16px;">Hex codes (e.g., #0B3C8C). Leave blank to inherit defaults.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+            <div class="form-group">
+                {{ form.primary_color.label }}
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    {{ form.primary_color(class="form-control", style="flex: 1;") }}
+                    <input type="color" value="{{ form.primary_color.data or '#0B3C8C' }}" onchange="this.previousElementSibling.value = this.value" style="width: 40px; height: 40px; border: none; cursor: pointer;">
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form.secondary_color.label }}
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    {{ form.secondary_color(class="form-control", style="flex: 1;") }}
+                    <input type="color" value="{{ form.secondary_color.data or '#0A1F44' }}" onchange="this.previousElementSibling.value = this.value" style="width: 40px; height: 40px; border: none; cursor: pointer;">
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form.accent_color.label }}
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    {{ form.accent_color(class="form-control", style="flex: 1;") }}
+                    <input type="color" value="{{ form.accent_color.data or '#D4A537' }}" onchange="this.previousElementSibling.value = this.value" style="width: 40px; height: 40px; border: none; cursor: pointer;">
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form.background_color.label }}
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    {{ form.background_color(class="form-control", style="flex: 1;") }}
+                    <input type="color" value="{{ form.background_color.data or '#FFFFFF' }}" onchange="this.previousElementSibling.value = this.value" style="width: 40px; height: 40px; border: none; cursor: pointer;">
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form.text_color.label }}
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    {{ form.text_color(class="form-control", style="flex: 1;") }}
+                    <input type="color" value="{{ form.text_color.data or '#111418' }}" onchange="this.previousElementSibling.value = this.value" style="width: 40px; height: 40px; border: none; cursor: pointer;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Assets</h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+            <div class="form-group">
+                {{ form.header_logo.label }}
+                {{ form.header_logo(class="form-control") }}
+                {% if editing and theme.header_logo %}
+                    <img src="{{ media_url(theme.header_logo) }}" alt="" style="max-width: 120px; margin-top: 8px;">
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.banner_image.label }}
+                {{ form.banner_image(class="form-control") }}
+                {% if editing and theme.banner_image %}
+                    <img src="{{ media_url(theme.banner_image) }}" alt="" style="max-width: 100%; margin-top: 8px;">
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.background_image.label }}
+                {{ form.background_image(class="form-control") }}
+                {% if editing and theme.background_image %}
+                    <img src="{{ media_url(theme.background_image) }}" alt="" style="max-width: 100%; margin-top: 8px;">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Decorations & Animations</h2>
+        <p class="text-muted" style="font-size: 13px; margin-bottom: 16px;">
+            All animations respect <code>prefers-reduced-motion</code> and are subtle by design.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.decoration_motif.label }}
+                {{ form.decoration_motif(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.decoration_density.label }}
+                {{ form.decoration_density(class="form-control") }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label style="font-weight: 600; margin-bottom: 8px; display: block;">Animations</label>
+            <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    {{ form.animation_snow() }}
+                    <span>Snow</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    {{ form.animation_sparkle() }}
+                    <span>Sparkle</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    {{ form.animation_float() }}
+                    <span>Floating Elements</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 8px;">
+                {{ form.sound_enabled() }}
+                <span>Enable Sound Effects</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Activation</h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.priority.label }}
+                {{ form.priority(class="form-control") }}
+                <small class="text-muted">{{ form.priority.description }}</small>
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; margin-top: 24px;">
+                    {{ form.is_active() }}
+                    <span>Active</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+        <button type="submit" class="btn btn-primary">Save Theme</button>
+        <a href="{{ url_for('admin.themes_list') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Sports — Campus — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.index') }}">Campus</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>Sports</span>
+    </nav>
+
+    <header class="archive-header">
+        <div class="archive-header__eyebrow">Campus</div>
+        <h1>Sports Hub</h1>
+        <p class="archive-header__desc">Fixtures, results, teams, and match reports.</p>
+    </header>
+
+    {% if sports %}
+    <section class="home-section">
+        <div class="section-header"><h2>Sports</h2></div>
+        <div class="sports-grid">
+            {% for sport in sports %}
+                <a href="{{ url_for('campus.sport_show', slug=sport.slug) }}" class="sport-tile">
+                    {% if sport.icon %}
+                        <img src="{{ media_url(sport.icon) }}" alt="" class="sport-tile__icon">
+                    {% else %}
+                        <div class="sport-tile__icon sport-tile__icon--placeholder">{{ sport.name[0]|upper }}</div>
+                    {% endif %}
+                    <h2 class="sport-tile__name">{{ sport.name }}</h2>
+                </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="campus-duo">
+        <div class="campus-duo__col">
+            <div class="section-header"><h2>🔴 Live & Upcoming</h2></div>
+            {% if live or upcoming %}
+                {% for fixture in live + upcoming %}
+                    {% include 'components/fixture_card.html' with context %}
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No upcoming fixtures.</p>
+            {% endif %}
+        </div>
+        <div class="campus-duo__col">
+            <div class="section-header"><h2>Recent Results</h2></div>
+            {% if recent %}
+                {% for fixture in recent %}
+                    {% include 'components/fixture_card.html' with context %}
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No recent results.</p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+    .sports-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 16px;
+    }
+    .sport-tile {
+        display: block; padding: 20px; text-align: center;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); text-decoration: none;
+        transition: border-color 0.2s, transform 0.2s;
+    }
+    .sport-tile:hover { border-color: var(--brand-primary); transform: translateY(-2px); text-decoration: none; }
+    .sport-tile__icon {
+        width: 56px; height: 56px; border-radius: 50%;
+        object-fit: cover; margin: 0 auto 10px;
+    }
+    .sport-tile__icon--placeholder {
+        background: var(--brand-primary); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif; font-size: 22px; font-weight: 700;
+    }
+    .sport-tile__name {
+        font-family: 'Inter', sans-serif;
+        font-size: 15px; font-weight: 600; color: var(--text);
+    }
+</style>
+{% endblock %}

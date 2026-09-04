@@ -1,0 +1,29 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Log in — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 520px;">
+    <div class="section-header">
+        <h1>Welcome back</h1>
+    </div>
+    <p class="text-muted" style="margin-bottom: 24px;">Sign in to manage your Lavisco News account.</p>
+    <form method="post" class="card">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.username.label }}
+            {{ form.username(class="form-control", autocomplete="username") }}
+            {% for error in form.username.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+            {{ form.password.label }}
+            {{ form.password(class="form-control", autocomplete="current-password") }}
+            {% for error in form.password.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+            {{ form.remember() }} {{ form.remember.label }}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+</div>
+{% endblock %}

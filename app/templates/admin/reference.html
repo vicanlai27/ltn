@@ -1,0 +1,47 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{{ title }} — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px;">
+        <div>
+            <p class="text-muted" style="font-size: 13px; margin-bottom: 6px;">Content reference</p>
+            <h1 style="color: var(--brand-primary);">{{ title }}</h1>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Back to dashboard</a>
+    </div>
+
+    <div class="card">
+        {% if items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Articles</th>
+                    <th>Public page</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><strong>{{ item.name }}</strong></td>
+                    <td><code>{{ item.slug }}</code></td>
+                    <td>{{ item.articles|length }}</td>
+                    <td>
+                        <a class="btn btn-ghost" href="{{ url_for(public_endpoint, slug=item.slug) }}" target="_blank" rel="noreferrer">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <h3>No {{ title|lower }} yet</h3>
+            <p>There is nothing to show here yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

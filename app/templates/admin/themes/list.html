@@ -1,0 +1,101 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Themes — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="color: var(--brand-primary);">Themes</h1>
+    <a href="{{ url_for('admin.themes_new') }}" class="btn btn-primary">+ New Theme</a>
+</div>
+
+{% if active_theme %}
+<div class="card" style="margin-bottom: 24px; border-left: 4px solid var(--accent);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div class="text-muted" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;">Currently Active</div>
+            <strong style="font-size: 18px;">{{ active_theme.name }}</strong>
+            <span class="badge badge-accent" style="margin-left: 8px;">{{ active_theme.theme_type }}</span>
+        </div>
+        <form method="POST" action="{{ url_for('admin.themes_deactivate', theme_id=active_theme.id) }}" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-secondary">Deactivate</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+    {% for theme in themes %}
+    <div class="card" style="{% if active_theme and theme.id == active_theme.id %}border-color: var(--accent);{% endif %}">
+        {# Color preview swatch #}
+        <div style="display: flex; gap: 4px; margin-bottom: 12px;">
+            {% if theme.primary_color %}
+                <div style="width: 32px; height: 32px; border-radius: 4px; background: {{ theme.primary_color }};" title="Primary"></div>
+            {% endif %}
+            {% if theme.secondary_color %}
+                <div style="width: 32px; height: 32px; border-radius: 4px; background: {{ theme.secondary_color }};" title="Secondary"></div>
+            {% endif %}
+            {% if theme.accent_color %}
+                <div style="width: 32px; height: 32px; border-radius: 4px; background: {{ theme.accent_color }};" title="Accent"></div>
+            {% endif %}
+            {% if theme.background_color %}
+                <div style="width: 32px; height: 32px; border-radius: 4px; background: {{ theme.background_color }}; border: 1px solid var(--border);" title="Background"></div>
+            {% endif %}
+        </div>
+
+        <h3 style="margin-bottom: 4px;">
+            {{ theme.name }}
+            {% if active_theme and theme.id == active_theme.id %}
+                <span class="badge badge-accent">Active</span>
+            {% endif %}
+            {% if not theme.is_active %}
+                <span class="badge badge-info">Inactive</span>
+            {% endif %}
+        </h3>
+
+        <div class="text-muted" style="font-size: 13px; margin-bottom: 8px;">
+            {{ theme.theme_type|replace('_', ' ')|title }} · Priority {{ theme.priority }}
+        </div>
+
+        {% if theme.description %}
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">{{ theme.description|truncate(100) }}</p>
+        {% endif %}
+
+        {% if theme.start_date or theme.end_date %}
+            <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+                {% if theme.start_date %}{{ theme.start_date.strftime('%b %d, %Y') }}{% endif %}
+                {% if theme.start_date and theme.end_date %} → {% endif %}
+                {% if theme.end_date %}{{ theme.end_date.strftime('%b %d, %Y') }}{% endif %}
+            </div>
+        {% endif %}
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <a href="{{ url_for('admin.themes_edit', theme_id=theme.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+            <a href="{{ url_for('admin.themes_preview', theme_id=theme.id) }}" class="btn btn-ghost" style="padding: 6px 12px; font-size: 13px;">Preview</a>
+            {% if not (active_theme and theme.id == active_theme.id) %}
+                {% if theme.is_active %}
+                    <form method="POST" action="{{ url_for('admin.themes_deactivate', theme_id=theme.id) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Deactivate</button>
+                    </form>
+                {% else %}
+                    <form method="POST" action="{{ url_for('admin.themes_activate', theme_id=theme.id) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size: 13px;">Activate</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+            <form method="POST" action="{{ url_for('admin.themes_delete', theme_id=theme.id) }}" style="display: inline;" onsubmit="return confirm('Delete this theme?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <h3>No themes yet</h3>
+            <p>Create your first theme or run the seed command to add calendar themes.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

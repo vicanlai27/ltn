@@ -1,0 +1,84 @@
+{# Expects: fixture #}
+<div class="fixture-card {% if fixture.status == 'live' %}fixture-card--live{% endif %}">
+    <div class="fixture-card__competition">
+        {{ fixture.competition or 'Friendly' }}
+        {% if fixture.status == 'live' %}<span class="fixture-card__live-badge">LIVE</span>{% endif %}
+    </div>
+    <div class="fixture-card__teams">
+        <div class="fixture-card__team fixture-card__team--home">
+            {% if fixture.home_team.logo %}
+                <img src="{{ media_url(fixture.home_team.logo) }}" alt="" class="fixture-card__team-logo">
+            {% endif %}
+            <span class="fixture-card__team-name">{{ fixture.home_team.name }}</span>
+            {% if fixture.status == 'completed' or fixture.status == 'live' %}
+                <span class="fixture-card__score">{{ fixture.home_score if fixture.home_score is not none else '-' }}</span>
+            {% endif %}
+        </div>
+        <div class="fixture-card__vs">vs</div>
+        <div class="fixture-card__team fixture-card__team--away">
+            {% if fixture.status == 'completed' or fixture.status == 'live' %}
+                <span class="fixture-card__score">{{ fixture.away_score if fixture.away_score is not none else '-' }}</span>
+            {% endif %}
+            <span class="fixture-card__team-name">{{ fixture.away_team.name }}</span>
+            {% if fixture.away_team.logo %}
+                <img src="{{ media_url(fixture.away_team.logo) }}" alt="" class="fixture-card__team-logo">
+            {% endif %}
+        </div>
+    </div>
+    <div class="fixture-card__meta">
+        <time datetime="{{ fixture.match_date.isoformat() }}">
+            {{ fixture.match_date.strftime('%b %d') }} · {{ fixture.match_date.strftime('%H:%M') }}
+        </time>
+        {% if fixture.venue %}<span>· {{ fixture.venue }}</span>{% endif %}
+    </div>
+</div>
+
+<style>
+    .fixture-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 14px 16px;
+        margin-bottom: 10px;
+    }
+    .fixture-card--live { border-color: var(--error); border-width: 2px; }
+    .fixture-card__competition {
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--muted); margin-bottom: 10px; font-weight: 600;
+    }
+    .fixture-card__live-badge {
+        background: var(--error); color: white;
+        padding: 2px 8px; border-radius: 3px;
+        font-size: 10px; font-weight: 700;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    @media (prefers-reduced-motion: reduce) { .fixture-card__live-badge { animation: none; } }
+
+    .fixture-card__teams {
+        display: grid; grid-template-columns: 1fr auto 1fr;
+        gap: 12px; align-items: center; margin-bottom: 10px;
+    }
+    .fixture-card__team {
+        display: flex; align-items: center; gap: 8px;
+    }
+    .fixture-card__team--away { justify-content: flex-end; }
+    .fixture-card__team-logo {
+        width: 28px; height: 28px; border-radius: 50%;
+        object-fit: cover;
+    }
+    .fixture-card__team-name {
+        font-size: 14px; font-weight: 600; color: var(--text);
+    }
+    .fixture-card__vs {
+        font-size: 11px; color: var(--muted); font-weight: 600;
+    }
+    .fixture-card__score {
+        font-family: 'Merriweather', serif;
+        font-size: 20px; font-weight: 700;
+        color: var(--brand-primary);
+    }
+    .fixture-card__meta {
+        display: flex; gap: 8px; font-size: 12px;
+        color: var(--muted); flex-wrap: wrap;
+    }
+</style>

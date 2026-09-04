@@ -1,0 +1,60 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Lavisco Shorts — {{ site_name }}{% endblock %}
+{% block meta_description %}Short-form vertical videos from Lavisco News.{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="archive-header">
+        <div class="archive-header__eyebrow">🎥 Multimedia</div>
+        <h1>Lavisco Shorts</h1>
+        <p class="archive-header__desc">Quick vertical videos from our newsroom.</p>
+    </header>
+
+    {% if shorts.items %}
+        <div class="shorts-feed" data-shorts-feed>
+            {% for video in shorts.items %}
+                {% set autoplay = (loop.index == 1) %}
+                {% include 'components/short_player.html' with context %}
+            {% endfor %}
+        </div>
+
+        {% if shorts.has_next %}
+            <div style="text-align: center; margin-top: 24px;">
+                <a href="{{ url_for('media.shorts_feed', page=shorts.next_num) }}" class="btn btn-secondary">Load more</a>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <h3>No shorts yet</h3>
+            <p>Short-form videos will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .shorts-feed {
+        display: flex; flex-direction: column;
+        gap: 16px; align-items: center;
+        max-width: 480px; margin: 0 auto;
+    }
+    @media (min-width: 900px) {
+        .shorts-feed {
+            scroll-snap-type: y mandatory;
+            max-height: 90vh;
+            overflow-y: auto;
+            gap: 0;
+        }
+        .shorts-feed .short-player {
+            scroll-snap-align: start;
+            border-radius: 0;
+        }
+        .shorts-feed .short-player:first-child {
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .shorts-feed .short-player:last-child {
+            border-radius: 0 0 var(--radius) var(--radius);
+        }
+    }
+</style>
+{% endblock %}

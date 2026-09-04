@@ -1,0 +1,66 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Pending Accounts — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div>
+    <h1 style="margin-bottom: 32px; color: var(--brand-primary);">Pending Account Verification</h1>
+
+    <div style="background: #FEF3C7; border-left: 4px solid var(--warning); padding: 16px; border-radius: 6px; margin-bottom: 24px;">
+        <strong>Note:</strong> Accounts created by admins require super_admin verification before they can log in.
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Created By</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users.items %}
+            <tr>
+                <td><strong>{{ user.username }}</strong></td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.role|replace('_', ' ')|title }}</td>
+                <td>
+                    {% if user.created_by %}
+                        {{ user.created_by.username }}
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td class="text-muted">{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin.users_verify', user_id=user.id) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size: 14px;">Verify Account</button>
+                    </form>
+                    <a href="{{ url_for('admin.users_edit', user_id=user.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 14px;">Edit</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center text-muted" style="padding: 32px;">No pending accounts</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if users.pages > 1 %}
+    <div style="margin-top: 24px; display: flex; justify-content: center; gap: 8px;">
+        {% if users.has_prev %}
+            <a href="{{ url_for('admin.accounts_pending', page=users.prev_num) }}" class="btn btn-secondary">← Previous</a>
+        {% endif %}
+        <span style="padding: 10px 16px; color: var(--muted);">Page {{ users.page }} of {{ users.pages }}</span>
+        {% if users.has_next %}
+            <a href="{{ url_for('admin.accounts_pending', page=users.next_num) }}" class="btn btn-secondary">Next →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

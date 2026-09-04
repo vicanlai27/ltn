@@ -1,0 +1,86 @@
+{% extends "layouts/newsroom_base.html" %}
+
+{% block title %}My Dashboard — {{ site_name }}{% endblock %}
+
+{% block newsroom_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+    <div>
+        <h1 style="color: var(--brand-primary);">Welcome back{% if current_user.author_profile %}, {{ current_user.author_profile.display_name }}{% endif %}</h1>
+        <p class="text-muted">{{ current_user.role.replace('_', ' ')|title }}</p>
+    </div>
+    <a href="{{ url_for('newsroom.articles_new') }}" class="btn btn-primary">+ Write New Article</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 32px;">
+    <div class="card">
+        <div class="text-muted" style="font-size: 12px; text-transform: uppercase;">Drafts</div>
+        <div style="font-size: 28px; font-weight: 700;">{{ counts.draft }}</div>
+    </div>
+    <div class="card">
+        <div class="text-muted" style="font-size: 12px; text-transform: uppercase;">Pending Review</div>
+        <div style="font-size: 28px; font-weight: 700;">{{ counts.pending_review }}</div>
+    </div>
+    <div class="card">
+        <div class="text-muted" style="font-size: 12px; text-transform: uppercase;">Pending Audit</div>
+        <div style="font-size: 28px; font-weight: 700;">{{ counts.pending_audit }}</div>
+    </div>
+    <div class="card">
+        <div class="text-muted" style="font-size: 12px; text-transform: uppercase;">Published</div>
+        <div style="font-size: 28px; font-weight: 700;">{{ counts.published }}</div>
+    </div>
+    <div class="card">
+        <div class="text-muted" style="font-size: 12px; text-transform: uppercase;">Rejected</div>
+        <div style="font-size: 28px; font-weight: 700;">{{ counts.rejected }}</div>
+    </div>
+</div>
+
+<h2 style="margin-bottom: 16px;">My Articles</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for article in articles %}
+        <tr>
+            <td><strong>{{ article.title|truncate(60) }}</strong></td>
+            <td>
+                {% if article.status == 'draft' %}
+                    <span class="badge badge-info">Draft</span>
+                {% elif article.status == 'pending_review' %}
+                    <span class="badge badge-warning">Pending Review</span>
+                {% elif article.status == 'pending_audit' %}
+                    <span class="badge badge-warning">Pending Audit</span>
+                {% elif article.status == 'published' %}
+                    <span class="badge badge-success">Published</span>
+                {% elif article.status == 'rejected' %}
+                    <span class="badge badge-error">Rejected</span>
+                {% endif %}
+            </td>
+            <td class="text-muted">{{ article.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>
+                {% if article.status in ['draft', 'rejected'] %}
+                    <a href="{{ url_for('newsroom.articles_edit', article_id=article.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+                {% endif %}
+                {% if article.status == 'published' %}
+                    <a href="{{ url_for('public.article', slug=article.slug) }}" class="btn btn-ghost" style="padding: 6px 12px; font-size: 13px;" target="_blank">View</a>
+                {% endif %}
+                {% if article.status == 'rejected' and article.audit_notes %}
+                    <span class="text-muted" style="font-size: 12px;" title="{{ article.audit_notes }}">Notes ⓘ</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4" class="text-center text-muted" style="padding: 32px;">
+                You haven't written anything yet. <a href="{{ url_for('newsroom.articles_new') }}">Write your first article</a>.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

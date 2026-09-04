@@ -1,0 +1,142 @@
+{% extends "layouts/base.html" %}
+
+{% block extra_head %}
+<style>
+    .admin-layout {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        min-height: calc(100vh - 200px);
+    }
+    .admin-sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        padding: 24px 0;
+    }
+    .admin-sidebar__section {
+        margin-bottom: 24px;
+    }
+    .admin-sidebar__title {
+        font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--muted); padding: 0 20px;
+        margin-bottom: 8px;
+    }
+    .admin-sidebar__link {
+        display: block; padding: 8px 20px;
+        color: var(--text); font-size: 14px;
+        text-decoration: none; transition: background 0.2s;
+    }
+    .admin-sidebar__link:hover {
+        background: var(--background);
+        text-decoration: none;
+    }
+    .admin-sidebar__link.active {
+        background: var(--brand-primary);
+        color: white;
+    }
+    .admin-sidebar__badge {
+        display: inline-block; padding: 2px 8px;
+        background: var(--accent); color: var(--brand-secondary);
+        border-radius: 10px; font-size: 11px; font-weight: 700;
+        margin-left: 8px;
+    }
+    .admin-content { padding: 32px; }
+    .page-head { display:flex; justify-content:space-between; align-items:center; gap:18px; margin-bottom:24px; flex-wrap:wrap; }
+    .page-head h1 { color:var(--brand-primary); }
+    .admin-content table { width:100%; border-collapse:collapse; }
+    .admin-content th, .admin-content td { padding:12px 10px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+    .admin-content th { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+    @media (max-width: 900px) {
+        .admin-layout { grid-template-columns: 1fr; }
+        .admin-sidebar { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar__section">
+            <div class="admin-sidebar__title">Dashboard</div>
+            <a href="{{ url_for('admin.dashboard') }}" class="admin-sidebar__link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">Overview</a>
+        </div>
+
+        <div class="admin-sidebar__section">
+            <div class="admin-sidebar__title">Content</div>
+            <a href="{{ url_for('admin.articles_list') }}" class="admin-sidebar__link {% if 'articles' in request.endpoint %}active{% endif %}">Articles</a>
+            <a href="{{ url_for('admin.review_queue') }}" class="admin-sidebar__link {% if request.endpoint == 'admin.review_queue' %}active{% endif %}">
+                Review Queue
+                {% if pending_review_count is defined and pending_review_count > 0 %}
+                    <span class="admin-sidebar__badge">{{ pending_review_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('admin.audit_queue') }}" class="admin-sidebar__link {% if request.endpoint == 'admin.audit_queue' %}active{% endif %}">
+                Audit Queue
+                {% if pending_audit_count is defined and pending_audit_count > 0 %}
+                    <span class="admin-sidebar__badge">{{ pending_audit_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('admin.categories_list') }}" class="admin-sidebar__link {% if request.endpoint == 'admin.categories_list' %}active{% endif %}">Categories</a>
+            <a href="{{ url_for('admin.tags_list') }}" class="admin-sidebar__link {% if request.endpoint == 'admin.tags_list' %}active{% endif %}">Tags</a>
+        </div>
+
+        <div class="admin-sidebar__section">
+            <div class="admin-sidebar__title">Campus</div>
+            {% if current_user.role == 'super_admin' %}
+                <a href="{{ url_for('admin.houses_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.houses' in request.endpoint %}active{% endif %}">Houses</a>
+                <a href="{{ url_for('admin.clubs_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.clubs' in request.endpoint %}active{% endif %}">Clubs</a>
+                <a href="{{ url_for('admin.sports_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.sports' in request.endpoint %}active{% endif %}">Sports</a>
+                <a href="{{ url_for('admin.teams_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.teams' in request.endpoint %}active{% endif %}">Teams</a>
+            {% else %}
+                <a href="{{ url_for('campus.houses_index') }}" class="admin-sidebar__link">Houses</a>
+                <a href="{{ url_for('campus.clubs_index') }}" class="admin-sidebar__link">Clubs</a>
+                <a href="{{ url_for('campus.sports_index') }}" class="admin-sidebar__link">Sports</a>
+            {% endif %}
+            <a href="{{ url_for('admin.fixtures_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.fixtures' in request.endpoint %}active{% endif %}">Fixtures</a>
+            <a href="{{ url_for('admin.events_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.events' in request.endpoint %}active{% endif %}">Events</a>
+            <a href="{{ url_for('admin.students_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.students' in request.endpoint %}active{% endif %}">Students</a>
+            <a href="{{ url_for('admin.staff_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.staff' in request.endpoint %}active{% endif %}">Staff</a>
+            <a href="{{ url_for('admin.alumni_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.alumni' in request.endpoint %}active{% endif %}">Alumni</a>
+        </div>
+
+        <div class="admin-sidebar__section">
+            <div class="admin-sidebar__title">Media</div>
+            <a href="{{ url_for('admin.galleries_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.galleries' in request.endpoint %}active{% endif %}">Galleries</a>
+            <a href="{{ url_for('admin.videos_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.videos' in request.endpoint %}active{% endif %}">Videos</a>
+            <a href="{{ url_for('admin.podcasts_list') }}" class="admin-sidebar__link {% if request.endpoint and 'admin.podcasts' in request.endpoint %}active{% endif %}">Podcasts</a>
+        </div>
+
+        <div class="admin-sidebar__section">
+            <div class="admin-sidebar__title">Editorial</div>
+            <a href="{{ url_for('admin.themes_list') }}" class="admin-sidebar__link {% if 'themes' in request.endpoint %}active{% endif %}">Themes</a>
+            <a href="{{ url_for('admin.special_editions_list') }}" class="admin-sidebar__link {% if 'special_editions' in request.endpoint %}active{% endif %}">Special Editions</a>
+            {% if current_user.role in ['editor', 'admin', 'super_admin'] %}<a href="{{ url_for('admin.placements_list') }}" class="admin-sidebar__link {% if 'placements' in request.endpoint %}active{% endif %}">Homepage Curation</a>{% endif %}
+            <a href="{{ url_for('admin.announcements_list') }}" class="admin-sidebar__link {% if 'announcements' in request.endpoint %}active{% endif %}">Announcements</a>
+            <a href="{{ url_for('admin.reports_list') }}" class="admin-sidebar__link {% if 'reports' in request.endpoint %}active{% endif %}">Reader Reports</a>
+            <a href="{{ url_for('admin.advertisements_list') }}" class="admin-sidebar__link {% if 'advertisements' in request.endpoint %}active{% endif %}">Advertisements</a>
+        </div>
+
+        {% if current_user.role in ['admin', 'super_admin'] %}
+        <div class="admin-sidebar__section">
+            <div class="admin-sidebar__title">Administration</div>
+            <a href="{{ url_for('admin.users_list') }}" class="admin-sidebar__link {% if 'users' in request.endpoint %}active{% endif %}">Users</a>
+            <a href="{{ url_for('admin.users_new') }}" class="admin-sidebar__link {% if request.endpoint == 'admin.users_new' %}active{% endif %}">Create User</a>
+            {% if current_user.role == 'super_admin' %}
+                <a href="{{ url_for('admin.accounts_pending') }}" class="admin-sidebar__link {% if request.endpoint == 'admin.accounts_pending' %}active{% endif %}">
+                    Pending Accounts
+                    {% if pending_users_count is defined and pending_users_count > 0 %}
+                        <span class="admin-sidebar__badge">{{ pending_users_count }}</span>
+                    {% endif %}
+                </a>
+            {% endif %}
+            <a href="{{ url_for('admin.notifications_list') }}" class="admin-sidebar__link {% if 'notifications' in request.endpoint %}active{% endif %}">Notifications</a>
+            <a href="{{ url_for('auth.profile') }}" class="admin-sidebar__link">Settings</a>
+        </div>
+        {% endif %}
+    </aside>
+
+    <div class="admin-content">
+        {% block admin_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

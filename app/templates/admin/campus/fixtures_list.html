@@ -1,0 +1,47 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Fixtures — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="color: var(--brand-primary);">Fixtures</h1>
+    <a href="{{ url_for('admin.fixtures_new') }}" class="btn btn-primary">+ New Fixture</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+    {% for fixture in fixtures %}
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <h3 style="margin: 0;">{{ fixture.home_team.name }} vs {{ fixture.away_team.name }}</h3>
+            <span class="badge badge-info">{{ fixture.status }}</span>
+        </div>
+
+        <div class="text-muted" style="font-size: 13px; margin-bottom: 8px;">
+            {{ fixture.match_date.strftime('%b %d, %Y · %H:%M') if fixture.match_date else '—' }}
+            {% if fixture.competition %}· {{ fixture.competition }}{% endif %}
+        </div>
+
+        {% if fixture.status == 'completed' and fixture.home_score is not none %}
+            <p style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">{{ fixture.home_score }} — {{ fixture.away_score }}</p>
+        {% endif %}
+
+        {% if fixture.venue %}
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">📍 {{ fixture.venue }}</p>
+        {% endif %}
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <a href="{{ url_for('admin.fixtures_edit', fixture_id=fixture.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+            <form method="POST" action="{{ url_for('admin.fixtures_delete', fixture_id=fixture.id) }}" style="display: inline;" onsubmit="return confirm('Delete this fixture? This cannot be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <h3>No fixtures yet</h3>
+            <p>Create teams first, then schedule the first fixture.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

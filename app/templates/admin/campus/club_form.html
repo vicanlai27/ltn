@@ -1,0 +1,69 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{% if editing %}Edit Club{% else %}New Club{% endif %} — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<h1 style="margin-bottom: 24px; color: var(--brand-primary);">
+    {% if editing %}Edit: {{ club.name }}{% else %}New Club{% endif %}
+</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="card" style="margin-bottom: 24px;">
+        <div class="form-group">
+            {{ form.name.label }}
+            {{ form.name(class="form-control") }}
+            {% for error in form.name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", rows=4) }}
+        </div>
+
+        <div class="form-group">
+            {{ form.meeting_information.label }}
+            {{ form.meeting_information(class="form-control", rows=3) }}
+        </div>
+
+        <div class="form-group">
+            {{ form.leader_name.label }}
+            {{ form.leader_name(class="form-control") }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.logo.label }}
+                {{ form.logo(class="form-control") }}
+                {% if editing and club.logo %}
+                    <div style="margin-top: 12px;">
+                        <img src="{{ media_url(club.logo) }}" alt="" style="max-width: 120px; border-radius: var(--radius);">
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.cover_image.label }}
+                {{ form.cover_image(class="form-control") }}
+                {% if editing and club.cover_image %}
+                    <div style="margin-top: 12px;">
+                        <img src="{{ media_url(club.cover_image) }}" alt="" style="max-width: 100%; border-radius: var(--radius);">
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 8px;">
+                {{ form.is_active() }}
+                <span>Active</span>
+            </label>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+        <button type="submit" class="btn btn-primary">Save Club</button>
+        <a href="{{ url_for('admin.clubs_list') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

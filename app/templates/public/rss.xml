@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>{{ site_name }}</title>
+        <link>{{ request.host_url.rstrip('/') }}</link>
+        <description>{{ site_tagline }}</description>
+        <language>en-UG</language>
+        <atom:link href="{{ url_for('public.rss', _external=True) }}" rel="self" type="application/rss+xml"/>
+        {% for article in articles %}
+        <item>
+            <title>{{ article.title|e }}</title>
+            <link>{{ url_for('public.article', slug=article.slug, _external=True) }}</link>
+            <guid isPermaLink="true">{{ url_for('public.article', slug=article.slug, _external=True) }}</guid>
+            <description>{{ (article.excerpt or '')|e }}</description>
+            {% if article.published_at %}
+            <pubDate>{{ article.published_at.strftime('%a, %d %b %Y %H:%M:%S +0000') }}</pubDate>
+            {% endif %}
+            {% if article.author and article.author.author_profile %}
+            <author>{{ article.author.author_profile.display_name|e }}</author>
+            {% endif %}
+            {% if article.category %}
+            <category>{{ article.category.name|e }}</category>
+            {% endif %}
+        </item>
+        {% endfor %}
+    </channel>
+</rss>

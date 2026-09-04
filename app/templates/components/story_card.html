@@ -1,0 +1,89 @@
+{# Story card — used in lists, grids, rails. #}
+{# Expects: article (Article), variant (default|compact|horizontal), show_category (bool) #}
+{% set variant = variant|default('default') %}
+{% set show_category = show_category|default(true) %}
+
+<article class="story-card story-card--{{ variant }}">
+        {% if article.featured_image %}
+        <a href="{{ url_for('public.article', slug=article.slug) }}" class="story-card__media">
+            {% set srcset = responsive_srcset(article.featured_image) %}
+            {% if srcset %}
+                <img srcset="{{ srcset }}"
+                     sizes="{{ responsive_sizes('default') }}"
+                     src="{{ media_url(article.featured_image) }}"
+                     alt="{{ article.featured_image_alt or article.title }}"
+                     loading="lazy"
+                     decoding="async"
+                     width="800" height="450">
+            {% else %}
+                <img src="{{ media_url(article.featured_image) }}"
+                     alt="{{ article.featured_image_alt or article.title }}"
+                     loading="lazy"
+                     decoding="async"
+                     width="800" height="450">
+            {% endif %}
+        </a>
+    {% endif %}
+    <div class="story-card__body">
+        {% if show_category and article.category %}
+            <a href="{{ url_for('public.category', slug=article.category.slug) }}" class="story-card__category">
+                {{ article.category.name }}
+            </a>
+        {% endif %}
+        <h3 class="story-card__title">
+            <a href="{{ url_for('public.article', slug=article.slug) }}">{{ article.title }}</a>
+        </h3>
+        {% if variant != 'compact' and article.excerpt %}
+            <p class="story-card__excerpt">{{ article.excerpt }}</p>
+        {% endif %}
+        <div class="story-card__meta">
+            {% if article.author and article.author.author_profile %}
+                <span class="story-card__author">
+                    By <a href="{{ url_for('public.author', slug=article.author.author_profile.slug) }}">
+                        {{ article.author.author_profile.display_name }}
+                    </a>
+                </span>
+                <span class="story-card__sep">·</span>
+            {% endif %}
+            <time class="story-card__time" datetime="{{ (article.published_at or article.created_at).isoformat() }}">
+                {{ (article.published_at or article.created_at).strftime('%b %d, %Y') }}
+            </time>
+        </div>
+    </div>
+</article>
+
+<style>
+    .story-card { display: flex; flex-direction: column; gap: 12px; }
+    .story-card__media {
+        display: block; aspect-ratio: 16/9; overflow: hidden;
+        border-radius: var(--radius); background: var(--surface);
+    }
+    .story-card__media img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+    .story-card:hover .story-card__media img { transform: scale(1.03); }
+    .story-card__category {
+        display: inline-block; font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--brand-primary); margin-bottom: 6px;
+    }
+    .story-card__title {
+        font-size: 18px; font-weight: 700; line-height: 1.3;
+        margin-bottom: 8px;
+    }
+    .story-card__title a { color: var(--text); text-decoration: none; }
+    .story-card__title a:hover { color: var(--brand-primary); }
+    .story-card--compact .story-card__title { font-size: 15px; }
+    .story-card--horizontal { flex-direction: row; gap: 16px; }
+    .story-card--horizontal .story-card__media { flex: 0 0 140px; aspect-ratio: 1; }
+    .story-card__excerpt {
+        font-size: 14px; color: var(--muted); line-height: 1.5;
+        margin-bottom: 8px;
+        display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .story-card__meta {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 12px; color: var(--muted); flex-wrap: wrap;
+    }
+    .story-card__author a { color: var(--muted); font-weight: 500; }
+    .story-card__author a:hover { color: var(--brand-primary); }
+</style>

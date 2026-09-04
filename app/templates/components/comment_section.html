@@ -1,0 +1,103 @@
+{# Comment section — expects: article, comments, comment_form, comment_reaction_counts, user_comment_reactions #}
+{% set comment_reaction_types = [
+    ('like', '👍', 'Like'),
+    ('love', '❤️', 'Love'),
+    ('laugh', '😂', 'Laugh'),
+] %}
+
+<section class="comment-section" id="comments">
+    <div class="section-header" style="margin-bottom: 16px;">
+        <h2>Comments <span class="comment-section__count">({{ comments|length }})</span></h2>
+    </div>
+
+    <form method="POST" action="{{ url_for('public.article_post_comment', slug=article.slug) }}" class="comment-form">
+        {{ comment_form.hidden_tag() }}
+        <div class="form-group">
+            {{ comment_form.display_name.label }}
+            {{ comment_form.display_name(class="form-control", placeholder="Anonymous") }}
+        </div>
+        <div class="form-group">
+            {{ comment_form.body.label }}
+            {{ comment_form.body(class="form-control", rows=3, placeholder="Share your thoughts...", maxlength=2000) }}
+            {% for error in comment_form.body.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+        {{ comment_form.submit(class="btn btn-primary") }}
+    </form>
+
+    <div class="comment-list">
+        {% for comment in comments %}
+            {% set counts = comment_reaction_counts.get(comment.id, {}) %}
+            {% set user_reaction = user_comment_reactions.get(comment.id) %}
+            <article class="comment" data-comment-id="{{ comment.id }}">
+                <div class="comment__header">
+                    <span class="comment__author">{{ comment.display_name }}</span>
+                    <time class="comment__time" datetime="{{ comment.created_at.isoformat() }}">
+                        {{ comment.created_at.strftime('%b %d, %Y · %H:%M') }}
+                    </time>
+                </div>
+                <div class="comment__body">{{ comment.body }}</div>
+                <div style="margin-top:8px"><details><summary style="cursor:pointer;color:var(--muted);font-size:12px">Report</summary><form method="POST" action="{{ url_for('public.comment_report', slug=article.slug, comment_id=comment.id) }}" style="margin-top:8px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><textarea name="reason" class="form-control" rows="2" maxlength="2000" placeholder="Why should editors review this comment?" required></textarea><button class="btn btn-secondary" style="margin-top:6px;padding:6px 10px;font-size:12px">Send report</button></form></details></div>
+                <div class="comment__reactions" data-comment-reactions>
+                    {% for type, emoji, label in comment_reaction_types %}
+                        <button class="comment__reaction-btn{{ ' active' if user_reaction == type else '' }}"
+                                data-reaction-type="{{ type }}" aria-label="{{ label }}" title="{{ label }}">
+                            <span class="comment__reaction-emoji">{{ emoji }}</span>
+                            <span data-count-for="{{ type }}">{{ counts.get(type, 0) }}</span>
+                        </button>
+                    {% endfor %}
+                </div>
+            </article>
+        {% else %}
+            <p class="comment-list__empty">No comments yet — be the first to share your thoughts.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<style>
+    .comment-section {
+        margin: 40px 0; padding-top: 24px;
+        border-top: 1px solid var(--border);
+        max-width: 760px;
+    }
+    .comment-section__count { color: var(--muted); font-weight: 400; }
+
+    .comment-form {
+        margin-bottom: 28px; padding: 16px;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius);
+    }
+    .comment-form .form-group { margin-bottom: 12px; }
+    .comment-form textarea.form-control { resize: vertical; }
+
+    .comment-list { display: flex; flex-direction: column; gap: 16px; }
+    .comment-list__empty { color: var(--muted); font-size: 14px; }
+
+    .comment {
+        padding: 16px; border: 1px solid var(--border);
+        border-radius: var(--radius); background: var(--background);
+    }
+    .comment__header {
+        display: flex; align-items: baseline; gap: 10px;
+        margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .comment__author { font-weight: 700; font-size: 14px; }
+    .comment__time { font-size: 12px; color: var(--muted); }
+    .comment__body {
+        font-size: 15px; line-height: 1.6; color: var(--text);
+        white-space: pre-wrap; word-break: break-word;
+        margin-bottom: 10px;
+    }
+    .comment__reactions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .comment__reaction-btn {
+        display: flex; align-items: center; gap: 5px;
+        padding: 3px 10px; border-radius: 16px;
+        background: var(--surface); border: 1px solid var(--border);
+        cursor: pointer; font-family: inherit; font-size: 13px;
+        color: var(--muted); transition: all 0.15s;
+    }
+    .comment__reaction-btn:hover { border-color: var(--brand-primary); }
+    .comment__reaction-btn.active {
+        background: var(--brand-primary); border-color: var(--brand-primary); color: white;
+    }
+    .comment__reaction-emoji { font-size: 14px; }
+</style>

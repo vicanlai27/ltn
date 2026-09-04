@@ -1,0 +1,56 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ gallery.title }} — Gallery — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.index') }}">Campus</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.gallery_index') }}">Gallery</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>{{ gallery.title }}</span>
+    </nav>
+
+    <header class="archive-header">
+        <h1>{{ gallery.title }}</h1>
+        {% if gallery.description %}<p class="archive-header__desc">{{ gallery.description }}</p>{% endif %}
+        <p class="text-muted" style="font-size: 13px; margin-top: 8px;">
+            Published {{ gallery.published_at.strftime('%B %d, %Y') }} · {{ gallery.images|length }} photo{{ 's' if gallery.images|length != 1 else '' }}
+        </p>
+    </header>
+
+    <div class="gallery-mosaic">
+        {% for img in gallery.images %}
+            <figure class="gallery-mosaic__item">
+                <img src="{{ url_for('media.gallery_image', image_id=img.id) }}" alt="{{ img.alt_text or gallery.title }}" loading="lazy">
+                {% if img.caption %}
+                    <figcaption>{{ img.caption }}</figcaption>
+                {% endif %}
+            </figure>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .gallery-mosaic {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 12px;
+    }
+    .gallery-mosaic__item {
+        background: var(--surface); border-radius: var(--radius);
+        overflow: hidden;
+    }
+    .gallery-mosaic__item img {
+        width: 100%; aspect-ratio: 4/3; object-fit: cover;
+        display: block; transition: transform 0.3s;
+    }
+    .gallery-mosaic__item:hover img { transform: scale(1.03); }
+    .gallery-mosaic__item figcaption {
+        padding: 10px 12px; font-size: 13px;
+        color: var(--muted); font-style: italic;
+    }
+</style>
+{% endblock %}

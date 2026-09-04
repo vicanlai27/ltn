@@ -1,0 +1,86 @@
+{# Video card — expects: video #}
+<a href="{{ url_for('media.video_show', slug=video.slug) }}" class="video-card">
+    <div class="video-card__media">
+        {% if video.thumbnail %}
+            <img src="{{ media_url(video.thumbnail) }}" alt="{{ video.title }}" loading="lazy">
+        {% else %}
+            <div class="video-card__placeholder">🎥</div>
+        {% endif %}
+        <div class="video-card__play-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        {% if video.duration %}
+            <span class="video-card__duration">
+                {{ (video.duration // 60) }}:{{ '%02d' % (video.duration % 60) }}
+            </span>
+        {% endif %}
+    </div>
+    <div class="video-card__body">
+        <h3 class="video-card__title">{{ video.title }}</h3>
+        <div class="video-card__meta">
+            {% if video.view_count %}
+                <span>{{ '{:,}'.format(video.view_count) }} views</span>
+            {% endif %}
+            {% if video.published_at %}
+                <span>· {{ video.published_at.strftime('%b %d, %Y') }}</span>
+            {% endif %}
+        </div>
+    </div>
+</a>
+
+<style>
+    .video-card {
+        display: block; text-decoration: none;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); overflow: hidden;
+        transition: border-color 0.2s, transform 0.2s;
+    }
+    .video-card:hover { border-color: var(--brand-primary); transform: translateY(-2px); text-decoration: none; }
+
+    .video-card__media {
+        position: relative; aspect-ratio: 16/9;
+        background: var(--brand-secondary); overflow: hidden;
+    }
+    .video-card__media img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform 0.3s;
+    }
+    .video-card:hover .video-card__media img { transform: scale(1.05); }
+    .video-card__placeholder {
+        width: 100%; height: 100%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 48px; color: var(--accent);
+        background: var(--brand-secondary);
+    }
+    .video-card__play-icon {
+        position: absolute; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(10, 31, 68, 0.3);
+        opacity: 0; transition: opacity 0.2s;
+    }
+    .video-card:hover .video-card__play-icon { opacity: 1; }
+    .video-card__play-icon svg {
+        width: 56px; height: 56px; color: white;
+        filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+    }
+    .video-card__duration {
+        position: absolute; bottom: 8px; right: 8px;
+        background: rgba(0,0,0,0.8); color: white;
+        padding: 2px 8px; border-radius: 3px;
+        font-size: 12px; font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .video-card__body { padding: 14px; }
+    .video-card__title {
+        font-family: 'Inter', sans-serif;
+        font-size: 15px; font-weight: 600;
+        color: var(--text); line-height: 1.35;
+        margin-bottom: 6px;
+        display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .video-card__meta {
+        font-size: 12px; color: var(--muted);
+    }
+</style>

@@ -1,0 +1,285 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{{ 'Superadmin' if current_user.role == 'super_admin' else 'Admin' }} Dashboard — {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<style>
+    .dashboard-shell { max-width: 1480px; }
+    .dashboard-hero {
+        display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+        padding: 28px 30px; margin-bottom: 24px; border-radius: 18px;
+        color: white; overflow: hidden; position: relative;
+        background: linear-gradient(120deg, var(--brand-secondary), var(--brand-primary));
+        box-shadow: 0 16px 36px rgba(10, 31, 68, .16);
+    }
+    .dashboard-hero::after {
+        content: ''; position: absolute; width: 220px; height: 220px; right: 8%; top: -120px;
+        border: 42px solid rgba(255,255,255,.07); border-radius: 50%;
+    }
+    .dashboard-hero__copy, .dashboard-hero__actions { position: relative; z-index: 1; }
+    .dashboard-eyebrow {
+        color: var(--accent); font-size: 11px; font-weight: 800;
+        letter-spacing: .16em; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .dashboard-hero h1 { color: white; font-size: clamp(25px, 4vw, 38px); margin-bottom: 8px; }
+    .dashboard-hero p { color: rgba(255,255,255,.78); max-width: 640px; margin: 0; }
+    .dashboard-hero__actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .dashboard-hero .btn-secondary { background: rgba(255,255,255,.12); color: white; border-color: rgba(255,255,255,.28); }
+    .dashboard-hero .btn-secondary:hover { background: rgba(255,255,255,.2); }
+    .dashboard-toolbar {
+        display: flex; justify-content: space-between; align-items: center; gap: 16px;
+        margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .dashboard-toolbar h2 { font: 700 15px 'Inter', sans-serif; letter-spacing: .01em; }
+    .dashboard-periods { display: flex; gap: 6px; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+    .dashboard-periods a { padding: 7px 11px; color: var(--muted); font-size: 12px; font-weight: 700; border-radius: 7px; }
+    .dashboard-periods a:hover, .dashboard-periods a.active { color: white; background: var(--brand-primary); text-decoration: none; }
+    .dashboard-metrics { display: grid; grid-template-columns: repeat(6, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .dashboard-metric { padding: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; min-height: 118px; }
+    .dashboard-metric__label { color: var(--muted); font-size: 12px; font-weight: 700; margin-bottom: 9px; }
+    .dashboard-metric__value { font: 800 28px 'Inter', sans-serif; color: var(--brand-secondary); letter-spacing: -.03em; }
+    [data-theme="dark"] .dashboard-metric__value { color: var(--text); }
+    .dashboard-metric__meta { color: var(--muted); font-size: 11px; margin-top: 7px; }
+    .dashboard-metric--blue { border-top: 3px solid var(--brand-primary); }
+    .dashboard-metric--gold { border-top: 3px solid var(--accent); }
+    .dashboard-metric--green { border-top: 3px solid var(--success); }
+    .dashboard-metric--orange { border-top: 3px solid var(--warning); }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, .9fr); gap: 18px; margin-bottom: 18px; }
+    .dashboard-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; min-width: 0; }
+    .dashboard-card__heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 20px; }
+    .dashboard-card__heading h2 { font: 800 16px 'Inter', sans-serif; }
+    .dashboard-card__heading span { color: var(--muted); font-size: 12px; }
+    .trend-chart { height: 198px; display: flex; align-items: stretch; gap: 5px; padding: 12px 0 25px; border-bottom: 1px solid var(--border); }
+    .trend-chart__item { flex: 1 1 0; min-width: 4px; display: flex; align-items: flex-end; position: relative; }
+    .trend-chart__bar { width: 100%; min-height: 4px; border-radius: 4px 4px 1px 1px; background: linear-gradient(180deg, var(--accent), var(--brand-primary)); transition: opacity .2s; }
+    .trend-chart__item:hover .trend-chart__bar { opacity: .72; }
+    .trend-chart__label { position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; color: var(--muted); font-size: 9px; }
+    .trend-chart__item:nth-child(odd) .trend-chart__label { display: none; }
+    .trend-empty { width: 100%; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+    .stat-line { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; font-size: 13px; }
+    .stat-line strong { color: var(--brand-secondary); }
+    [data-theme="dark"] .stat-line strong { color: var(--text); }
+    .story-list { display: grid; gap: 4px; }
+    .story-list__item { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .story-list__item:last-child { border-bottom: 0; }
+    .story-list__rank { width: 28px; height: 28px; display: grid; place-items: center; background: rgba(11,60,140,.1); color: var(--brand-primary); border-radius: 8px; font-weight: 800; font-size: 12px; }
+    .story-list__title { color: var(--text); font-size: 13px; font-weight: 700; line-height: 1.35; }
+    .story-list__meta { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; font-weight: 400; }
+    .story-list__numbers { text-align: right; white-space: nowrap; font: 800 13px 'Inter', sans-serif; }
+    .story-list__numbers small { display: block; color: var(--muted); font: 400 10px 'Inter', sans-serif; margin-top: 3px; }
+    .mix-list { display: grid; gap: 17px; }
+    .mix-list__row { display: grid; grid-template-columns: minmax(112px, .8fr) 1.5fr auto; align-items: center; gap: 12px; font-size: 12px; }
+    .mix-list__name { font-weight: 700; }
+    .mix-list__track { height: 8px; background: var(--border); border-radius: 8px; overflow: hidden; }
+    .mix-list__fill { height: 100%; min-width: 5px; background: var(--brand-primary); border-radius: inherit; }
+    .mix-list__value { color: var(--muted); text-align: right; white-space: nowrap; }
+    .category-list { display: grid; gap: 13px; }
+    .category-list__row { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 13px; }
+    .category-list__row strong { font-weight: 700; }
+    .category-list__row span { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .dashboard-activity table { margin-top: 0; }
+    .dashboard-activity td, .dashboard-activity th { padding: 11px 10px; }
+    .dashboard-callout { padding: 18px; border-radius: 12px; background: linear-gradient(135deg, rgba(212,165,55,.14), rgba(11,60,140,.08)); border: 1px solid rgba(212,165,55,.35); }
+    .dashboard-callout h3 { font: 800 14px 'Inter', sans-serif; margin-bottom: 5px; }
+    .dashboard-callout p { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+    @media (max-width: 1180px) { .dashboard-metrics { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 820px) {
+        .dashboard-hero { align-items: flex-start; flex-direction: column; padding: 22px; }
+        .dashboard-hero__actions { justify-content: flex-start; }
+        .dashboard-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+        .dashboard-metrics { grid-template-columns: repeat(2, 1fr); }
+        .dashboard-card { padding: 16px; }
+        .dashboard-periods { width: 100%; justify-content: space-between; }
+        .dashboard-periods a { flex: 1; text-align: center; padding-left: 4px; padding-right: 4px; }
+        .mix-list__row { grid-template-columns: 1fr auto; }
+        .mix-list__track { grid-column: 1 / -1; grid-row: 2; }
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="dashboard-shell">
+    <header class="dashboard-hero">
+        <div class="dashboard-hero__copy">
+            <div class="dashboard-eyebrow">{{ 'Superadmin control center' if current_user.role == 'super_admin' else 'Admin newsroom overview' }}</div>
+            <h1>{{ 'Superadmin Dashboard' if current_user.role == 'super_admin' else 'Admin Dashboard' }}</h1>
+            <p>See what the newsroom is publishing, how readers are responding, and where editorial attention is needed.</p>
+        </div>
+        <div class="dashboard-hero__actions">
+            <a href="{{ url_for('admin.articles_new') }}" class="btn btn-primary">+ Publish content</a>
+            {% if current_user.role in ('admin', 'super_admin') %}
+                <a href="{{ url_for('admin.users_new') }}" class="btn btn-secondary">+ Create user</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="dashboard-toolbar">
+        <h2>Content performance</h2>
+        <nav class="dashboard-periods" aria-label="Analytics reporting window">
+            {% for window in (7, 30, 90, 365) %}
+                <a href="{{ url_for('admin.dashboard', days=window) }}" class="{% if reporting_days == window %}active{% endif %}">{{ window }}d</a>
+            {% endfor %}
+        </nav>
+    </div>
+
+    <section class="dashboard-metrics" aria-label="Newsroom metrics">
+        <div class="dashboard-metric dashboard-metric--blue">
+            <div class="dashboard-metric__label">Published stories</div>
+            <div class="dashboard-metric__value">{{ '{:,}'.format(published_articles) }}</div>
+            <div class="dashboard-metric__meta">All-time live content</div>
+        </div>
+        <div class="dashboard-metric dashboard-metric--blue">
+            <div class="dashboard-metric__label">Reader views</div>
+            <div class="dashboard-metric__value">{{ '{:,}'.format(analytics.period_views) }}</div>
+            <div class="dashboard-metric__meta">Last {{ reporting_days }} days</div>
+        </div>
+        <div class="dashboard-metric dashboard-metric--gold">
+            <div class="dashboard-metric__label">Shares</div>
+            <div class="dashboard-metric__value">{{ '{:,}'.format(analytics.period_shares) }}</div>
+            <div class="dashboard-metric__meta">Across published content</div>
+        </div>
+        <div class="dashboard-metric dashboard-metric--gold">
+            <div class="dashboard-metric__label">Reactions</div>
+            <div class="dashboard-metric__value">{{ '{:,}'.format(analytics.period_reactions) }}</div>
+            <div class="dashboard-metric__meta">Likes, loves and more</div>
+        </div>
+        <div class="dashboard-metric dashboard-metric--green">
+            <div class="dashboard-metric__label">Newly published</div>
+            <div class="dashboard-metric__value">{{ '{:,}'.format(analytics.published_in_period) }}</div>
+            <div class="dashboard-metric__meta">Last {{ reporting_days }} days</div>
+        </div>
+        <div class="dashboard-metric dashboard-metric--orange">
+            <div class="dashboard-metric__label">Needs attention</div>
+            <div class="dashboard-metric__value">{{ pending_review + pending_audit + drafts }}</div>
+            <div class="dashboard-metric__meta">{{ pending_review + pending_audit }} in review · {{ drafts }} drafts</div>
+        </div>
+    </section>
+
+    <div class="dashboard-grid">
+        <section class="dashboard-card">
+            <div class="dashboard-card__heading">
+                <h2>Reader traffic</h2>
+                <span>Views by {{ 'month' if reporting_days > 90 else 'week' if reporting_days > 31 else 'day' }}</span>
+            </div>
+            <div class="trend-chart" aria-label="Reader views trend">
+                {% if analytics.view_trend %}
+                    {% for point in analytics.view_trend %}
+                    <div class="trend-chart__item" title="{{ point.label }}: {{ '{:,}'.format(point.value) }} views">
+                        <div class="trend-chart__bar" style="height: {{ ((point.value / analytics.max_trend_views * 100) if analytics.max_trend_views else 8) | round(1) }}%;"></div>
+                        <span class="trend-chart__label">{{ point.label }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="trend-empty">No reader events in this window yet.</div>
+                {% endif %}
+            </div>
+            <div class="stat-line">
+                <span>All-time article views</span>
+                <strong>{{ '{:,}'.format(analytics.all_time_views) }}</strong>
+            </div>
+            <div class="stat-line">
+                <span>Engagement rate</span>
+                <strong>{{ analytics.engagement_rate }}%</strong>
+            </div>
+        </section>
+
+        <section class="dashboard-card">
+            <div class="dashboard-card__heading">
+                <h2>Top stories</h2>
+                <span>All-time views</span>
+            </div>
+            <div class="story-list">
+                {% for article in analytics.top_articles %}
+                <div class="story-list__item">
+                    <div class="story-list__rank">{{ loop.index }}</div>
+                    <div>
+                        <a class="story-list__title" href="{{ url_for('public.article', slug=article.slug) }}">{{ article.title|truncate_text(68) }}</a>
+                        <span class="story-list__meta">{{ article.category.name if article.category else 'Uncategorized' }} · {{ article.status|replace('_', ' ')|title }}</span>
+                    </div>
+                    <div class="story-list__numbers">
+                        {{ '{:,}'.format(article.view_count or 0) }}
+                        <small>{{ '{:,}'.format(article.share_count or 0) }} shares</small>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted" style="padding: 20px 0;">Publish stories to see performance rankings.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <div class="dashboard-grid">
+        <section class="dashboard-card">
+            <div class="dashboard-card__heading">
+                <h2>Content mix</h2>
+                <span>{{ published_articles }} published total</span>
+            </div>
+            <div class="mix-list">
+                {% for mix in analytics.content_mix %}
+                <div class="mix-list__row">
+                    <div class="mix-list__name">{{ mix.label }}</div>
+                    <div class="mix-list__track"><div class="mix-list__fill" style="width: {{ [mix.percent, 4]|max }}%;"></div></div>
+                    <div class="mix-list__value">{{ mix.count }} · {{ '{:,}'.format(mix.views) }} views</div>
+                </div>
+                {% else %}
+                <p class="text-muted">No published content yet.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="dashboard-card">
+            <div class="dashboard-card__heading">
+                <h2>Category performance</h2>
+                <span>Top six by views</span>
+            </div>
+            <div class="category-list">
+                {% for category in analytics.category_performance %}
+                <div class="category-list__row">
+                    <strong>{{ category.label }}</strong>
+                    <span>{{ '{:,}'.format(category.views) }} views · {{ category.count }} stories</span>
+                </div>
+                {% else %}
+                <p class="text-muted">Add categories to compare performance.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    {% if current_user.role == 'super_admin' %}
+    <div class="dashboard-callout" style="margin-bottom: 18px;">
+        <h3>Superadmin access</h3>
+        <p>Create and activate any newsroom account — including admins, editors, authors, student journalists, contributors and other superadmins — from one place.</p>
+        <a href="{{ url_for('admin.users_new') }}" class="btn btn-primary" style="padding: 8px 14px;">Create any user account</a>
+    </div>
+    {% endif %}
+
+    <section class="dashboard-card dashboard-activity">
+        <div class="dashboard-card__heading">
+            <h2>Recent activity</h2>
+            <span>{{ total_users }} total users · {{ pending_users }} pending verification</span>
+        </div>
+        {% if recent_activity %}
+            <table>
+                <thead>
+                    <tr><th>Action</th><th>Actor</th><th>Target</th><th>Time</th></tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_activity %}
+                    <tr>
+                        <td><code>{{ log.action }}</code></td>
+                        <td>{{ log.actor.username if log.actor else 'System' }}</td>
+                        <td>{{ log.target_type ~ ' #' ~ log.target_id if log.target_type and log.target_id else '—' }}</td>
+                        <td class="text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted text-center" style="padding: 24px;">No recent activity</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

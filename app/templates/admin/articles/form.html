@@ -1,0 +1,817 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{% if editing %}Edit Article{% else %}New Article{% endif %} — Admin — {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<style>
+    #tiptap-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 8px;
+        border: 1px solid var(--border);
+        border-bottom: none;
+        border-radius: var(--radius) var(--radius) 0 0;
+        background: var(--surface);
+    }
+    #tiptap-toolbar button {
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text);
+        border-radius: 4px;
+        padding: 5px 9px;
+        font-size: 13px;
+        cursor: pointer;
+        line-height: 1;
+    }
+    #tiptap-toolbar button:hover {
+        background: var(--border);
+    }
+    #tiptap-toolbar button.is-active {
+        background: var(--brand-primary);
+        color: #fff;
+    }
+    #tiptap-editor {
+        background: #fff;
+        color: #111418;
+        min-height: 360px;
+        border: 1px solid var(--border);
+        border-radius: 0 0 var(--radius) var(--radius);
+        padding: 12px 14px;
+        font-size: 15px;
+    }
+    [data-theme="dark"] #tiptap-editor {
+        background: var(--surface);
+        color: var(--text);
+    }
+    #tiptap-editor .ProseMirror {
+        outline: none;
+        min-height: 340px;
+    }
+    #tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        float: left;
+        color: var(--muted);
+        pointer-events: none;
+        height: 0;
+    }
+    #tiptap-editor .ProseMirror img {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius);
+    }
+    #tiptap-editor .ProseMirror hr {
+        border: none;
+        border-top: 2px solid var(--border);
+        margin: 1.5em 0;
+        cursor: pointer;
+    }
+    #tiptap-editor .ProseMirror hr.ProseMirror-selectednode {
+        border-top-color: var(--brand-primary);
+    }
+
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    @media (max-width: 640px) {
+        #tiptap-toolbar { gap: 2px; padding: 6px; }
+        #tiptap-toolbar button { padding: 6px 8px; font-size: 12px; }
+        #tiptap-editor { min-height: 260px; padding: 10px 12px; font-size: 14px; }
+        #tiptap-editor .ProseMirror { min-height: 240px; }
+        .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+        .article-youtube-card { flex: 0 0 150px; }
+    }
+
+    .article-youtube-picker {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding: 2px 2px 10px;
+        scrollbar-width: thin;
+    }
+    .article-youtube-card {
+        flex: 0 0 190px;
+        padding: 0;
+        text-align: left;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+        transition: border-color .15s ease, transform .15s ease;
+    }
+    .article-youtube-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-1px);
+    }
+    .article-youtube-card.is-selected {
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-primary) 22%, transparent);
+    }
+    .article-youtube-card__thumb {
+        display: block;
+        position: relative;
+        aspect-ratio: 16 / 9;
+        background: var(--border);
+        overflow: hidden;
+    }
+    .article-youtube-card__thumb img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .article-youtube-card__play {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, .72);
+        color: #fff;
+        font-size: 13px;
+    }
+    .article-youtube-card__title {
+        display: block;
+        padding: 9px 10px;
+        font-size: 12px;
+        line-height: 1.35;
+        min-height: 48px;
+        overflow: hidden;
+    }
+
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<h1 style="margin-bottom: 24px; color: var(--brand-primary);">
+    {% if editing %}Edit: {{ article.title|truncate(50) }}{% else %}New Article{% endif %}
+</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Content</h2>
+
+        <div class="form-group">
+            {{ form.title.label }}
+            {{ form.title(class="form-control") }}
+            {% for error in form.title.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.excerpt.label }}
+            {{ form.excerpt(class="form-control", rows=3) }}
+            {% for error in form.excerpt.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.body.label }}
+            {{ form.body(style="display:none;") }}
+            <div id="tiptap-toolbar">
+                <button type="button" data-cmd="bold" title="Bold"><strong>B</strong></button>
+                <button type="button" data-cmd="italic" title="Italic"><em>I</em></button>
+                <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+                <button type="button" data-cmd="blockquote" title="Blockquote">&ldquo;&rdquo;</button>
+                <button type="button" data-cmd="h2" title="Heading 2">H2</button>
+                <button type="button" data-cmd="h3" title="Heading 3">H3</button>
+                <button type="button" data-cmd="bulletList" title="Bullet list">&bull; List</button>
+                <button type="button" data-cmd="orderedList" title="Numbered list">1. List</button>
+                <button type="button" data-cmd="link" title="Link">Link</button>
+                <button type="button" data-cmd="image" title="Image">Image</button>
+                <button type="button" data-cmd="hr" title="Horizontal rule">&mdash;</button>
+                <button type="button" data-cmd="clean" title="Clear formatting">Clear</button>
+            </div>
+            <div id="tiptap-editor"></div>
+            <small class="text-muted">Formatting is applied automatically — no HTML needed.</small>
+            {% for error in form.body.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Media</h2>
+
+        <div class="form-group">
+            {{ form.featured_image.label }}
+            {{ form.featured_image(class="form-control") }}
+            {% if editing and article.featured_image %}
+                <div style="margin-top: 12px;">
+                    <img src="{{ media_url(article.featured_image) }}" alt="" style="max-width: 300px; border-radius: var(--radius);">
+                </div>
+            {% endif %}
+    
+        <div class="form-group">
+            <label>YouTube video (optional)</label>
+            <p class="text-muted" style="font-size: 13px; margin: 0 0 12px;">
+                Link this article to a video from the Lavisco TV YouTube channel.
+            </p>
+
+            {{ form.youtube_video_id(id="youtube-video-id", style="display:none;") }}
+
+            {% if youtube_videos %}
+            <div class="article-youtube-picker" id="article-youtube-picker" role="listbox" aria-label="Latest YouTube videos">
+                {% for video in youtube_videos %}
+                <button type="button"
+                        class="article-youtube-card{% if form.youtube_video_id.data == video.video_id %} is-selected{% endif %}"
+                        data-video-id="{{ video.video_id }}"
+                        aria-selected="{{ 'true' if form.youtube_video_id.data == video.video_id else 'false' }}"
+                        title="{{ video.title }}">
+                    <span class="article-youtube-card__thumb">
+                        <img src="{{ video.thumbnail }}"
+                             data-fallbacks="{{ video.thumbnail_fallbacks|join(',') }}"
+                             alt="" loading="lazy"
+                             onerror="window.__articleYoutubeThumbFallback(this)">
+                        <span class="article-youtube-card__play">▶</span>
+                    </span>
+                    <span class="article-youtube-card__title">{{ video.title }}</span>
+                </button>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted" style="font-size: 13px; margin-bottom: 12px;">No recent YouTube videos are available right now.</p>
+            {% endif %}
+
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                <button type="button" id="article-youtube-clear" class="btn btn-ghost" style="padding: 5px 9px; font-size: 12px;">✕ Clear</button>
+                <span class="text-muted" style="font-size: 12px;">Selection is optional.</span>
+            </div>
+
+            <div style="margin-top: 14px;">
+                {{ form.youtube_video_url.label }}
+                {{ form.youtube_video_url(class="form-control", placeholder="YouTube link or 11-character video ID") }}
+                <small class="text-muted">Or paste a YouTube link/ID directly. Older videos may not appear in the picker.</small>
+                {% for error in form.youtube_video_url.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+        </div>
+
+        <script>
+            (function() {
+                var hidden = document.getElementById('youtube-video-id');
+                var manual = document.getElementById('youtube_video_url');
+                var picker = document.getElementById('article-youtube-picker');
+                var clear = document.getElementById('article-youtube-clear');
+                if (!hidden) return;
+
+                function normalize(value) {
+                    value = (value || '').trim();
+                    if (/^[A-Za-z0-9_-]{11}$/.test(value)) return value;
+
+                    try {
+                        var url = new URL(value);
+                        var host = (url.hostname || '').toLowerCase();
+                        if (host === 'youtube.com' || host === 'www.youtube.com') {
+                            if (url.pathname === '/watch') {
+                                var id = url.searchParams.get('v');
+                                return /^[A-Za-z0-9_-]{11}$/.test(id || '') ? id : '';
+                            }
+                            if (url.pathname.indexOf('/embed/') === 0) {
+                                var embedId = url.pathname.slice(7).split('/')[0];
+                                return /^[A-Za-z0-9_-]{11}$/.test(embedId) ? embedId : '';
+                            }
+                        }
+                        if (host === 'youtu.be') {
+                            var shortId = url.pathname.slice(1).split('/')[0];
+                            return /^[A-Za-z0-9_-]{11}$/.test(shortId) ? shortId : '';
+                        }
+                    } catch (e) {}
+                    return '';
+                }
+
+                function select(id) {
+                    hidden.value = id || '';
+                    if (picker) {
+                        picker.querySelectorAll('[data-video-id]').forEach(function(card) {
+                            var selected = !!id && card.dataset.videoId === id;
+                            card.classList.toggle('is-selected', selected);
+                            card.setAttribute('aria-selected', selected ? 'true' : 'false');
+                        });
+                    }
+                }
+
+                if (picker) {
+                    picker.addEventListener('click', function(event) {
+                        var card = event.target.closest('[data-video-id]');
+                        if (!card) return;
+                        var id = card.dataset.videoId;
+                        select(hidden.value === id ? '' : id);
+                        if (manual) manual.value = '';
+                    });
+                }
+
+                if (manual) {
+                    manual.addEventListener('input', function() {
+                        var value = manual.value.trim();
+                        select(value ? normalize(value) : '');
+                    });
+                    if (manual.value.trim()) select(normalize(manual.value));
+                }
+
+                if (clear) {
+                    clear.addEventListener('click', function() {
+                        if (manual) manual.value = '';
+                        select('');
+                    });
+                }
+
+                window.__articleYoutubeThumbFallback = function(img) {
+                    var fallbacks = (img.dataset.fallbacks || '').split(',').filter(Boolean);
+                    var next = fallbacks.shift();
+                    img.dataset.fallbacks = fallbacks.join(',');
+                    if (next) img.src = next;
+                };
+            })();
+        </script>
+    </div>
+
+        <div class="form-group">
+            {{ form.featured_image_alt.label }}
+            {{ form.featured_image_alt(class="form-control") }}
+        </div>
+
+        <div class="form-group">
+            {{ form.image_caption.label }}
+            {{ form.image_caption(class="form-control") }}
+        </div>
+
+        <div class="form-group">
+            {{ form.gallery_images.label }}
+            {{ form.gallery_images(class="form-control", multiple=true) }}
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                Optional — add as many extra images as you like. Readers will be able to
+                navigate through the featured image plus these while reading the story.
+            </div>
+            {% for error in form.gallery_images.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+
+            {% if editing and article.images %}
+                <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px;">
+                    {% for img in article.images %}
+                        <div style="position: relative;">
+                            <img src="{{ media_url(img.image) }}" alt="" style="width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--border);">
+                            <form method="POST" action="{{ url_for('admin.article_image_delete', article_id=article.id, image_id=img.id) }}" style="position: absolute; top: -8px; right: -8px;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" title="Remove image" aria-label="Remove image"
+                                        style="width: 22px; height: 22px; border-radius: 50%; background: var(--error); color: white; border: none; cursor: pointer; line-height: 1;">×</button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Poll</h2>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+            {{ form.enable_poll(id="enable_poll") }}
+            {{ form.enable_poll.label }}
+        </div>
+
+        <div id="poll-fields" style="{{ 'display:none;' if not (editing and article.poll) else '' }}">
+            <div class="form-group">
+                {{ form.poll_question.label }}
+                {{ form.poll_question(class="form-control", placeholder="e.g. Who should win Sports Day?") }}
+            </div>
+            <div class="form-group">
+                {{ form.poll_description.label }}
+                {{ form.poll_description(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.poll_option_1.label }}
+                {{ form.poll_option_1(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.poll_option_2.label }}
+                {{ form.poll_option_2(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.poll_option_3.label }}
+                {{ form.poll_option_3(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.poll_option_4.label }}
+                {{ form.poll_option_4(class="form-control") }}
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                {{ form.poll_allow_multiple() }}
+                {{ form.poll_allow_multiple.label }}
+            </div>
+            <div style="font-size: 12px; color: var(--muted);">
+                Needs a question and at least 2 filled-in options. Goes live for readers as soon as you save.
+            </div>
+        </div>
+
+        <script>
+            (function() {
+                var checkbox = document.getElementById('enable_poll');
+                var fields = document.getElementById('poll-fields');
+                if (!checkbox || !fields) return;
+                checkbox.addEventListener('change', function() {
+                    fields.style.display = checkbox.checked ? '' : 'none';
+                });
+            })();
+        </script>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Classification</h2>
+
+        <div class="form-grid-2">
+            <div class="form-group">{{ form.special_edition_id.label }}{{ form.special_edition_id(class="form-control") }}</div>
+                <div class="form-group">
+                {{ form.category_id.label }}
+                {{ form.category_id(class="form-control") }}
+            </div>
+
+            <div class="form-group">
+                {{ form.content_type.label }}
+                {{ form.content_type(class="form-control") }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            {{ form.tags.label }}
+            {{ form.tags(class="form-control", placeholder="politics, campus, sports") }}
+            <small class="text-muted">Comma-separated</small>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Campus Linkage</h2>
+
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 8px;">
+                {{ form.is_campus() }}
+                <span>This is a campus story</span>
+            </label>
+        </div>
+
+        <div class="form-grid-3">
+            <div class="form-group">
+                {{ form.campus_section.label }}
+                {{ form.campus_section(class="form-control") }}
+            </div>
+
+            <div class="form-group">
+                {{ form.house_id.label }}
+                {{ form.house_id(class="form-control") }}
+            </div>
+
+            <div class="form-group">
+                {{ form.club_id.label }}
+                {{ form.club_id(class="form-control") }}
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">Flags</h2>
+
+        <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+            <label style="display: flex; align-items: center; gap: 8px;">
+                {{ form.is_featured() }}
+                <span>Featured</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px;">
+                {{ form.is_breaking() }}
+                <span>Breaking News</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px;">
+                {{ form.is_editors_pick() }}
+                <span>Editor's Pick</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <h2 style="margin-bottom: 16px;">🎧 Audio Narration</h2>
+        <p class="text-muted" style="font-size: 13px; margin-bottom: 16px;">
+            Optional audio version of this article ("Listen to this story"). Upload a file or record directly from your microphone.
+        </p>
+
+        {{ form.audio_file(id="audio-file-input", style="display:none;", accept="audio/*") }}
+
+        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+            <button type="button" id="audio-tab-upload" class="btn btn-secondary audio-tab-btn">📁 Upload File</button>
+            <button type="button" id="audio-tab-record" class="btn btn-ghost audio-tab-btn">🎙️ Record Audio</button>
+        </div>
+
+        <div id="audio-panel-upload" class="audio-panel">
+            <button type="button" id="audio-choose-btn" class="btn btn-secondary">Choose Audio File</button>
+            <span id="audio-chosen-filename" class="text-muted" style="margin-left: 12px; font-size: 13px;"></span>
+        </div>
+
+        <div id="audio-panel-record" class="audio-panel" style="display: none;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <button type="button" id="record-start-btn" class="btn btn-primary">⏺ Start Recording</button>
+                <button type="button" id="record-stop-btn" class="btn btn-secondary" style="display: none;">⏹ Stop</button>
+                <span id="record-indicator" style="display: none; width: 10px; height: 10px; border-radius: 50%; background: var(--error);"></span>
+                <span id="record-timer" class="text-muted" style="font-size: 14px; font-variant-numeric: tabular-nums;"></span>
+            </div>
+            <div id="record-preview" style="display: none;">
+                <div style="font-size: 13px; color: var(--muted); margin-bottom: 6px;">Preview:</div>
+                <audio id="record-preview-audio" controls style="width: 100%; max-width: 400px;"></audio>
+                <div style="margin-top: 8px;">
+                    <button type="button" id="record-discard-btn" class="btn btn-ghost">Discard &amp; Re-record</button>
+                </div>
+            </div>
+            <p id="record-error" class="form-error" style="display: none;"></p>
+            <p id="record-unsupported" class="text-muted" style="display: none; font-size: 13px;">
+                Recording isn't supported in this browser (or the site isn't loaded over HTTPS/localhost). Please upload an audio file instead.
+            </p>
+        </div>
+
+        {% if editing and article.audio_url %}
+            <div style="margin-top: 12px; padding: 12px; background: var(--surface); border-radius: var(--radius);">
+                <div style="font-size: 13px; color: var(--muted); margin-bottom: 6px;">Current audio:</div>
+                <audio controls src="{{ media_url(article.audio_url) }}" style="width: 100%; max-width: 400px;"></audio>
+            </div>
+        {% endif %}
+    </div>
+
+    <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button type="submit" name="submit" value="1" class="btn btn-secondary">Save Draft</button>
+        {% if not editing or article.status in ['draft', 'rejected'] %}
+            <button type="submit" name="submit_review" value="1" class="btn btn-primary">Submit for Review</button>
+        {% endif %}
+        {% if current_user.is_at_least('editor') %}
+            <button type="submit" name="submit_publish" value="1" class="btn btn-primary">Publish Now</button>
+        {% endif %}
+        <a href="{{ url_for('admin.articles_list') }}" class="btn btn-ghost">Cancel</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="module">
+(async function() {
+    var sourceField = document.getElementById('body');
+    var toolbar = document.getElementById('tiptap-toolbar');
+    var editorEl = document.getElementById('tiptap-editor');
+
+    // The rich editor loads from a CDN at runtime. If there's no network
+    // (or the CDN is unreachable), fall back to a plain, fully editable
+    // textarea instead of leaving a dead, un-clickable box on the page.
+    var Editor, StarterKit, Underline, Link, Image, Placeholder;
+    try {
+        [Editor, StarterKit, Underline, Link, Image, Placeholder] = await Promise.all([
+            import('https://esm.sh/@tiptap/core@2.9.1').then(function(m) { return m.Editor; }),
+            import('https://esm.sh/@tiptap/starter-kit@2.9.1').then(function(m) { return m.default; }),
+            import('https://esm.sh/@tiptap/extension-underline@2.9.1').then(function(m) { return m.default; }),
+            import('https://esm.sh/@tiptap/extension-link@2.9.1').then(function(m) { return m.default; }),
+            import('https://esm.sh/@tiptap/extension-image@2.9.1').then(function(m) { return m.default; }),
+            import('https://esm.sh/@tiptap/extension-placeholder@2.9.1').then(function(m) { return m.default; }),
+        ]);
+    } catch (err) {
+        console.warn('Rich text editor unavailable (no network to CDN?) — falling back to plain text area.', err);
+        toolbar.style.display = 'none';
+        editorEl.style.display = 'none';
+        sourceField.style.display = '';
+        sourceField.rows = 16;
+        var notice = document.createElement('small');
+        notice.className = 'text-muted';
+        notice.style.display = 'block';
+        notice.style.marginTop = '4px';
+        notice.textContent = 'Rich text formatting requires an internet connection and could not load — editing plain HTML/text instead.';
+        sourceField.insertAdjacentElement('afterend', notice);
+        return;
+    }
+
+    var editor = new Editor({
+        element: document.getElementById('tiptap-editor'),
+        extensions: [
+            StarterKit.configure({ heading: { levels: [2, 3] } }),
+            Underline,
+            Link.configure({ openOnClick: false }),
+            Image,
+            Placeholder.configure({ placeholder: 'Write the article body…' }),
+        ],
+        content: sourceField.value && sourceField.value.trim() ? sourceField.value : '',
+        onUpdate: function(_ref) {
+            sourceField.value = _ref.editor.getHTML();
+            updateToolbarState();
+        },
+        onSelectionUpdate: updateToolbarState,
+    });
+
+    function updateToolbarState() {
+        toolbar.querySelectorAll('button[data-cmd]').forEach(function(btn) {
+            var cmd = btn.dataset.cmd;
+            var active = false;
+            if (cmd === 'bold') active = editor.isActive('bold');
+            else if (cmd === 'italic') active = editor.isActive('italic');
+            else if (cmd === 'underline') active = editor.isActive('underline');
+            else if (cmd === 'blockquote') active = editor.isActive('blockquote');
+            else if (cmd === 'h2') active = editor.isActive('heading', { level: 2 });
+            else if (cmd === 'h3') active = editor.isActive('heading', { level: 3 });
+            else if (cmd === 'bulletList') active = editor.isActive('bulletList');
+            else if (cmd === 'orderedList') active = editor.isActive('orderedList');
+            else if (cmd === 'link') active = editor.isActive('link');
+            btn.classList.toggle('is-active', active);
+        });
+    }
+
+    toolbar.addEventListener('click', function(e) {
+        var btn = e.target.closest('button[data-cmd]');
+        if (!btn) return;
+        var chain = editor.chain().focus();
+
+        switch (btn.dataset.cmd) {
+            case 'bold': chain.toggleBold().run(); break;
+            case 'italic': chain.toggleItalic().run(); break;
+            case 'underline': chain.toggleUnderline().run(); break;
+            case 'blockquote': chain.toggleBlockquote().run(); break;
+            case 'h2': chain.toggleHeading({ level: 2 }).run(); break;
+            case 'h3': chain.toggleHeading({ level: 3 }).run(); break;
+            case 'bulletList': chain.toggleBulletList().run(); break;
+            case 'orderedList': chain.toggleOrderedList().run(); break;
+            case 'clean': chain.clearNodes().unsetAllMarks().run(); break;
+            case 'link': {
+                var previousUrl = editor.getAttributes('link').href;
+                var url = window.prompt('Link URL', previousUrl || 'https://');
+                if (url === null) return;
+                if (url === '') {
+                    chain.unsetLink().run();
+                } else {
+                    chain.extendMarkRange('link').setLink({ href: url }).run();
+                }
+                break;
+            }
+            case 'image': {
+                var imgUrl = window.prompt('Image URL');
+                if (imgUrl) chain.setImage({ src: imgUrl }).run();
+                break;
+            }
+            case 'hr': {
+                chain.setHorizontalRule().run();
+                break;
+            }
+        }
+        updateToolbarState();
+    });
+
+    // Keep the hidden textarea in sync so the existing form submission
+    // and server-side validation continue to work unchanged.
+    var form = sourceField.closest('form');
+    form.addEventListener('submit', function() {
+        sourceField.value = editor.getHTML();
+    });
+
+    updateToolbarState();
+})();
+</script>
+<script>
+(function() {
+    var fileInput = document.getElementById('audio-file-input');
+    var tabUpload = document.getElementById('audio-tab-upload');
+    var tabRecord = document.getElementById('audio-tab-record');
+    var panelUpload = document.getElementById('audio-panel-upload');
+    var panelRecord = document.getElementById('audio-panel-record');
+    var chooseBtn = document.getElementById('audio-choose-btn');
+    var filenameLabel = document.getElementById('audio-chosen-filename');
+
+    var startBtn = document.getElementById('record-start-btn');
+    var stopBtn = document.getElementById('record-stop-btn');
+    var indicator = document.getElementById('record-indicator');
+    var timerLabel = document.getElementById('record-timer');
+    var previewWrap = document.getElementById('record-preview');
+    var previewAudio = document.getElementById('record-preview-audio');
+    var discardBtn = document.getElementById('record-discard-btn');
+    var errorLabel = document.getElementById('record-error');
+    var unsupportedLabel = document.getElementById('record-unsupported');
+
+    function activateTab(which) {
+        var uploadActive = which === 'upload';
+        panelUpload.style.display = uploadActive ? '' : 'none';
+        panelRecord.style.display = uploadActive ? 'none' : '';
+        tabUpload.className = 'btn audio-tab-btn ' + (uploadActive ? 'btn-secondary' : 'btn-ghost');
+        tabRecord.className = 'btn audio-tab-btn ' + (uploadActive ? 'btn-ghost' : 'btn-secondary');
+    }
+    tabUpload.addEventListener('click', function() { activateTab('upload'); });
+    tabRecord.addEventListener('click', function() { activateTab('record'); });
+    activateTab('upload');
+
+    // --- Manual file picking ---
+    chooseBtn.addEventListener('click', function() { fileInput.click(); });
+    fileInput.addEventListener('change', function() {
+        var f = fileInput.files && fileInput.files[0];
+        filenameLabel.textContent = f ? f.name : '';
+    });
+
+    // --- Recording ---
+    var canRecord = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+    if (!canRecord) {
+        startBtn.style.display = 'none';
+        unsupportedLabel.style.display = '';
+    } else {
+        var mediaRecorder = null;
+        var chunks = [];
+        var activeStream = null;
+        var timerInterval = null;
+        var startedAt = null;
+
+        function pickMimeType() {
+            var candidates = [
+                'audio/webm;codecs=opus', 'audio/webm',
+                'audio/ogg;codecs=opus', 'audio/ogg',
+                'audio/mp4'
+            ];
+            for (var i = 0; i < candidates.length; i++) {
+                if (MediaRecorder.isTypeSupported(candidates[i])) return candidates[i];
+            }
+            return '';
+        }
+
+        function extFromMime(mime) {
+            if (mime.indexOf('webm') !== -1) return 'webm';
+            if (mime.indexOf('ogg') !== -1) return 'ogg';
+            if (mime.indexOf('mp4') !== -1) return 'm4a';
+            return 'webm';
+        }
+
+        function formatTime(ms) {
+            var totalSec = Math.floor(ms / 1000);
+            var m = Math.floor(totalSec / 60);
+            var s = totalSec % 60;
+            return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        }
+
+        function stopStream() {
+            if (activeStream) {
+                activeStream.getTracks().forEach(function(t) { t.stop(); });
+                activeStream = null;
+            }
+        }
+
+        startBtn.addEventListener('click', function() {
+            errorLabel.style.display = 'none';
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+                activeStream = stream;
+                var mimeType = pickMimeType();
+                chunks = [];
+                mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = function(e) {
+                    if (e.data && e.data.size > 0) chunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = function() {
+                    clearInterval(timerInterval);
+                    indicator.style.display = 'none';
+                    var usedMime = mediaRecorder.mimeType || mimeType || 'audio/webm';
+                    var ext = extFromMime(usedMime);
+                    var blob = new Blob(chunks, { type: usedMime });
+                    var file = new File([blob], 'narration-' + Date.now() + '.' + ext, { type: usedMime });
+
+                    var dt = new DataTransfer();
+                    dt.items.add(file);
+                    fileInput.files = dt.files;
+                    filenameLabel.textContent = file.name;
+
+                    previewAudio.src = URL.createObjectURL(blob);
+                    previewWrap.style.display = '';
+                    startBtn.style.display = '';
+                    startBtn.textContent = '⏺ Start Recording';
+                    stopBtn.style.display = 'none';
+                    stopStream();
+                };
+
+                mediaRecorder.start();
+                startedAt = Date.now();
+                startBtn.style.display = 'none';
+                stopBtn.style.display = '';
+                indicator.style.display = '';
+                previewWrap.style.display = 'none';
+                timerLabel.textContent = '00:00';
+                timerInterval = setInterval(function() {
+                    timerLabel.textContent = formatTime(Date.now() - startedAt);
+                }, 250);
+            }).catch(function(err) {
+                errorLabel.textContent = 'Could not access the microphone: ' + err.message;
+                errorLabel.style.display = '';
+            });
+        });
+
+        stopBtn.addEventListener('click', function() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+        });
+
+        discardBtn.addEventListener('click', function() {
+            fileInput.value = '';
+            filenameLabel.textContent = '';
+            previewWrap.style.display = 'none';
+            timerLabel.textContent = '';
+        });
+    }
+})();
+</script>
+{% endblock %}

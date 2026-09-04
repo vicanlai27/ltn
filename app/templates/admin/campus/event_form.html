@@ -1,0 +1,75 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{% if editing %}Edit Event{% else %}New Event{% endif %} — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<h1 style="margin-bottom: 24px; color: var(--brand-primary);">
+    {% if editing %}Edit: {{ event.title }}{% else %}New Event{% endif %}
+</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="card" style="margin-bottom: 24px;">
+        <div class="form-group">
+            {{ form.title.label }}
+            {{ form.title(class="form-control") }}
+            {% for error in form.title.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", rows=4) }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.event_type.label }}
+                {{ form.event_type(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.status.label }}
+                {{ form.status(class="form-control") }}
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.start_at.label }}
+                {{ form.start_at(class="form-control") }}
+                {% for error in form.start_at.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.end_at.label }}
+                {{ form.end_at(class="form-control") }}
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.location.label }}
+                {{ form.location(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.organizer.label }}
+                {{ form.organizer(class="form-control") }}
+            </div>
+        </div>
+
+        <div class="form-group">
+            {{ form.image.label }}
+            {{ form.image(class="form-control") }}
+            {% if editing and event.image %}
+                <div style="margin-top: 12px;">
+                    <img src="{{ media_url(event.image) }}" alt="" style="max-width: 300px; border-radius: var(--radius);">
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+        <button type="submit" class="btn btn-primary">Save Event</button>
+        <a href="{{ url_for('admin.events_list') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

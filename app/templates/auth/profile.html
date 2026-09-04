@@ -1,0 +1,61 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Profile — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 760px;">
+    <div class="section-header">
+        <h1>Your profile</h1>
+    </div>
+    <div class="card" style="margin-bottom: 20px;">
+        <form method="post">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.display_name.label }}
+                {{ form.display_name(class="form-control", autocomplete="name") }}
+                {% for error in form.display_name.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.email.label }}
+                {{ form.email(class="form-control", autocomplete="email") }}
+                {% for error in form.email.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
+    </div>
+    <div class="card" style="margin-bottom: 20px;">
+        <h2 style="margin-bottom: 16px;">Change password</h2>
+        <form method="post" action="{{ url_for('auth.change_password') }}">
+            {{ password_form.hidden_tag() }}
+            <div class="form-group">
+                {{ password_form.current_password.label }}
+                {{ password_form.current_password(class="form-control", autocomplete="current-password") }}
+            </div>
+            <div class="form-group">
+                {{ password_form.new_password.label }}
+                {{ password_form.new_password(class="form-control", autocomplete="new-password") }}
+            </div>
+            <div class="form-group">
+                {{ password_form.confirm_password.label }}
+                {{ password_form.confirm_password(class="form-control", autocomplete="new-password") }}
+            </div>
+            {{ password_form.submit(class="btn btn-secondary") }}
+        </form>
+    </div>
+    {% if current_user.role in ('super_admin', 'admin') %}
+    <div class="card">
+        <h2 style="margin-bottom: 8px;">Account security</h2>
+        <p class="text-muted" style="margin-bottom: 16px;">Two-factor authentication adds another verification step to staff accounts.</p>
+        {% if current_user.totp_enabled %}
+            <span class="badge badge-accent">Two-factor authentication enabled</span>
+            <form method="post" action="{{ url_for('auth.two_factor_disable') }}" style="margin-top: 16px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secondary">Disable two-factor authentication</button>
+            </form>
+        {% else %}
+            <a href="{{ url_for('auth.two_factor_setup') }}" class="btn btn-primary">Set up two-factor authentication</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

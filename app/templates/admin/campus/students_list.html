@@ -1,0 +1,45 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Students — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="color: var(--brand-primary);">Students</h1>
+    <a href="{{ url_for('admin.students_new') }}" class="btn btn-primary">+ New Student Profile</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+    {% for student in students %}
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            {% if student.photo %}
+                <img src="{{ media_url(student.photo) }}" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;">
+            {% endif %}
+            <h3 style="margin: 0;">
+                {{ student.name }}
+                {% if student.is_featured %}<span class="badge badge-info">Featured</span>{% endif %}
+            </h3>
+        </div>
+
+        <div class="text-muted" style="font-size: 13px; margin-bottom: 12px;">
+            {% if student.class_or_level %}{{ student.class_or_level }}{% endif %}
+            {% if student.house %} · {{ student.house.name }}{% endif %}
+        </div>
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <a href="{{ url_for('campus.student_show', slug=student.slug) }}" class="btn btn-ghost" style="padding: 6px 12px; font-size: 13px;">View</a>
+            <a href="{{ url_for('admin.students_edit', student_id=student.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+            <form method="POST" action="{{ url_for('admin.students_delete', student_id=student.id) }}" style="display: inline;" onsubmit="return confirm('Delete this student profile? This cannot be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <h3>No student profiles yet</h3>
+            <p>Create the first student profile to get started.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

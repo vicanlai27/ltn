@@ -1,0 +1,104 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ person.name }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 760px;">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.index') }}">Campus</a>
+        <span class="breadcrumb__sep">/</span>
+        {% if person_type == 'student' %}
+            <a href="{{ url_for('campus.students_index') }}">Students</a>
+        {% elif person_type == 'staff' %}
+            <a href="{{ url_for('campus.staff_index') }}">Staff</a>
+        {% else %}
+            <a href="{{ url_for('campus.alumni_index') }}">Alumni</a>
+        {% endif %}
+    </nav>
+
+    <article class="person-detail">
+        {% if person.photo %}
+            <img src="{{ media_url(person.photo) }}" alt="" class="person-detail__photo">
+        {% else %}
+            <div class="person-detail__photo person-detail__photo--placeholder">{{ person.name[0]|upper }}</div>
+        {% endif %}
+
+        <h1>{{ person.name }}</h1>
+
+        <div class="person-detail__meta">
+            {% if person_type == 'student' %}
+                {% if person.class_or_level %}<span>📚 {{ person.class_or_level }}</span>{% endif %}
+                {% if person.house %}<span>🏠 {{ person.house.name }}</span>{% endif %}
+            {% elif person_type == 'staff' %}
+                {% if person.role %}<span>💼 {{ person.role }}</span>{% endif %}
+                {% if person.department %}<span>🏢 {{ person.department }}</span>{% endif %}
+            {% else %}
+                {% if person.graduation_year %}<span>🎓 Class of {{ person.graduation_year }}</span>{% endif %}
+                {% if person.current_role %}<span>💼 {{ person.current_role }}</span>{% endif %}
+                {% if person.location %}<span>📍 {{ person.location }}</span>{% endif %}
+            {% endif %}
+        </div>
+
+        {% if person_type == 'student' and person.achievements %}
+            <section class="person-detail__section">
+                <h2>Achievements</h2>
+                <p>{{ person.achievements }}</p>
+            </section>
+        {% endif %}
+
+        {% set bio = person.bio if person_type == 'student' else (person.bio if person_type == 'staff' else person.story) %}
+        {% if bio %}
+            <section class="person-detail__section">
+                <h2>{% if person_type == 'alumni' %}Story{% else %}About{% endif %}</h2>
+                <p>{{ bio }}</p>
+            </section>
+        {% endif %}
+
+        {% if person_type == 'staff' and person.social_links %}
+            <section class="person-detail__section">
+                <h2>Connect</h2>
+                <div class="person-detail__links">
+                    {% for platform, url in person.social_links.items() %}
+                        <a href="{{ url }}" target="_blank" rel="noopener" class="btn btn-secondary">{{ platform|title }}</a>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+    </article>
+</div>
+
+<style>
+    .person-detail { text-align: center; }
+    .person-detail__photo {
+        width: 160px; height: 160px; border-radius: 50%;
+        object-fit: cover; margin: 0 auto 20px;
+    }
+    .person-detail__photo--placeholder {
+        background: var(--brand-primary); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif; font-size: 64px; font-weight: 700;
+    }
+    .person-detail h1 { font-size: 32px; margin-bottom: 12px; }
+    .person-detail__meta {
+        display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+        font-size: 14px; color: var(--muted);
+        margin-bottom: 32px; padding-bottom: 24px;
+        border-bottom: 1px solid var(--border);
+    }
+    .person-detail__section {
+        text-align: left; margin-bottom: 28px;
+    }
+    .person-detail__section h2 {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--accent); margin-bottom: 10px;
+    }
+    .person-detail__section p {
+        font-size: 16px; line-height: 1.7;
+    }
+    .person-detail__links { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+{% endblock %}

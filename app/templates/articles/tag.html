@@ -1,0 +1,30 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}#{{ tag.name }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="archive-header">
+        <h1>#{{ tag.name }}</h1>
+    </header>
+
+    {% if articles.items %}
+        <div class="story-grid story-grid--3">
+            {% for article in articles.items %}
+                {% include 'components/story_card.html' with context %}
+            {% endfor %}
+        </div>
+        {% with pagination=articles, endpoint='public.tag', kwargs={'slug': tag.slug} %}
+            {% include 'components/pagination.html' %}
+        {% endwith %}
+    {% else %}
+        <div class="empty-state"><h3>No stories with this tag yet</h3></div>
+    {% endif %}
+</div>
+
+<style>
+    .archive-header { margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid var(--brand-secondary); position: relative; }
+    .archive-header::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 80px; height: 2px; background: var(--accent); }
+    .archive-header h1 { font-size: 36px; font-weight: 900; color: var(--brand-primary); }
+</style>
+{% endblock %}

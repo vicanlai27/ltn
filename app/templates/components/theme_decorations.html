@@ -1,0 +1,160 @@
+{#
+  Theme decorations — subtle CSS motifs that enhance the visual personality
+  without breaking layouts or accessibility.
+
+  Expects: active_theme (Theme object or None)
+
+  All animations respect prefers-reduced-motion.
+#}
+{% if active_theme %}
+    {% set deco = active_theme.decoration_config or {} %}
+    {% set anim = active_theme.animation_config or {} %}
+    {% set motif = deco.get('motif') %}
+    {% set density = deco.get('density', 'low') %}
+    {% set animations = anim.get('enabled', []) %}
+
+    {% if motif or animations %}
+    <div class="theme-decorations" aria-hidden="true" data-motif="{{ motif }}" data-density="{{ density }}">
+        {# Snow animation #}
+        {% if 'snow' in animations %}
+            <div class="theme-deco__snow">
+                {% for i in range(20) %}
+                    <span class="theme-deco__snowflake" style="--delay: {{ (i * 0.5) % 10 }}s; --left: {{ (i * 5) % 100 }}%; --duration: {{ 10 + (i % 5) }}s;"></span>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# Sparkle animation #}
+        {% if 'sparkle' in animations %}
+            <div class="theme-deco__sparkle">
+                {% for i in range(15) %}
+                    <span class="theme-deco__sparkle-dot" style="--delay: {{ (i * 0.7) % 8 }}s; --left: {{ (i * 7) % 100 }}%; --top: {{ (i * 11) % 100 }}%;"></span>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# Floating elements (hearts, bells, etc.) #}
+        {% if 'float' in animations and motif %}
+            <div class="theme-deco__float">
+                {% set float_icons = {
+                    'hearts': '❤',
+                    'christmas': '🔔',
+                    'celebration': '✨',
+                    'floral': '🌸',
+                    'crescent': '☾',
+                    'independence': '★',
+                    'books': '📚',
+                } %}
+                {% set icon = float_icons.get(motif, '•') %}
+                {% for i in range(10) %}
+                    <span class="theme-deco__float-icon" style="--delay: {{ (i * 1.2) % 12 }}s; --left: {{ (i * 10) % 100 }}%; --duration: {{ 15 + (i % 5) }}s;">{{ icon }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# Corner motif (static, subtle) #}
+        {% if motif and motif != 'snow' %}
+            <div class="theme-deco__corner theme-deco__corner--tl" data-motif="{{ motif }}"></div>
+            <div class="theme-deco__corner theme-deco__corner--br" data-motif="{{ motif }}"></div>
+        {% endif %}
+    </div>
+    {% endif %}
+{% endif %}
+
+<style>
+    .theme-decorations {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+        overflow: hidden;
+    }
+
+    /* Respect prefers-reduced-motion */
+    @media (prefers-reduced-motion: reduce) {
+        .theme-decorations * {
+            animation: none !important;
+            transition: none !important;
+        }
+    }
+
+    /* Snow */
+    .theme-deco__snowflake {
+        position: absolute;
+        top: -10px;
+        left: var(--left);
+        width: 6px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        animation: snowfall var(--duration) linear infinite;
+        animation-delay: var(--delay);
+        opacity: 0.4;
+    }
+    @keyframes snowfall {
+        0% { transform: translateY(-10px) translateX(0); opacity: 0; }
+        10% { opacity: 0.4; }
+        90% { opacity: 0.4; }
+        100% { transform: translateY(100vh) translateX(30px); opacity: 0; }
+    }
+
+    /* Sparkle */
+    .theme-deco__sparkle-dot {
+        position: absolute;
+        left: var(--left);
+        top: var(--top);
+        width: 4px;
+        height: 4px;
+        background: var(--accent, #D4A537);
+        border-radius: 50%;
+        animation: sparkle 3s ease-in-out infinite;
+        animation-delay: var(--delay);
+        opacity: 0;
+    }
+    @keyframes sparkle {
+        0%, 100% { opacity: 0; transform: scale(0.5); }
+        50% { opacity: 0.6; transform: scale(1); }
+    }
+
+    /* Floating icons */
+    .theme-deco__float-icon {
+        position: absolute;
+        bottom: -20px;
+        left: var(--left);
+        font-size: 16px;
+        opacity: 0.15;
+        animation: floatUp var(--duration) linear infinite;
+        animation-delay: var(--delay);
+    }
+    @keyframes floatUp {
+        0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.15; }
+        90% { opacity: 0.15; }
+        100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* Corner motifs — subtle SVG-like decorations */
+    .theme-deco__corner {
+        position: fixed;
+        width: 120px;
+        height: 120px;
+        opacity: 0.08;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .theme-deco__corner--tl {
+        top: 0;
+        left: 0;
+        background: radial-gradient(circle at top left, var(--accent, #D4A537) 0%, transparent 70%);
+    }
+    .theme-deco__corner--br {
+        bottom: 0;
+        right: 0;
+        background: radial-gradient(circle at bottom right, var(--accent, #D4A537) 0%, transparent 70%);
+    }
+
+    /* Density variations */
+    [data-density="none"] .theme-decorations > * { display: none; }
+    [data-density="medium"] .theme-deco__snowflake { width: 8px; height: 8px; }
+    [data-density="medium"] .theme-deco__float-icon { font-size: 20px; opacity: 0.2; }
+</style>

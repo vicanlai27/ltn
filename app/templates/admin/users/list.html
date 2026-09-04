@@ -1,0 +1,95 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Users — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+        <h1 style="color: var(--brand-primary);">Users</h1>
+        <a href="{{ url_for('admin.users_new') }}" class="btn btn-primary">+ Create User</a>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+        <form method="GET" style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <input type="text" name="q" value="{{ search or '' }}" placeholder="Search username or email..." style="flex: 1; min-width: 200px;">
+            <select name="role" style="min-width: 150px;">
+                <option value="">All Roles</option>
+                <option value="super_admin" {% if role_filter == 'super_admin' %}selected{% endif %}>Super Admin</option>
+                <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+                <option value="editor" {% if role_filter == 'editor' %}selected{% endif %}>Editor</option>
+                <option value="teacher_editor" {% if role_filter == 'teacher_editor' %}selected{% endif %}>Teacher Editor</option>
+                <option value="author" {% if role_filter == 'author' %}selected{% endif %}>Author</option>
+                <option value="student_journalist" {% if role_filter == 'student_journalist' %}selected{% endif %}>Student Journalist</option>
+        <option value="student_contributor" {% if role_filter == 'student_contributor' %}selected{% endif %}>Student Contributor</option>
+        <option value="alumni_contributor" {% if role_filter == 'alumni_contributor' %}selected{% endif %}>Alumni Contributor</option>
+            </select>
+            <select name="status" style="min-width: 150px;">
+                <option value="">All Statuses</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="pending_verification" {% if status_filter == 'pending_verification' %}selected{% endif %}>Pending</option>
+                <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Suspended</option>
+            </select>
+            <button type="submit" class="btn btn-secondary">Filter</button>
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users.items %}
+        <tr>
+            <td><strong>{{ user.username }}</strong></td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.role|replace('_', ' ')|title }}</td>
+            <td>
+                {% if user.account_status == 'active' %}
+                    <span class="badge badge-success">Active</span>
+                {% elif user.account_status == 'pending_verification' %}
+                    <span class="badge badge-warning">Pending</span>
+                {% elif user.account_status == 'suspended' %}
+                    <span class="badge badge-error">Suspended</span>
+                {% else %}
+                    <span class="badge badge-info">{{ user.account_status }}</span>
+                {% endif %}
+            </td>
+            <td class="text-muted">{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>
+                <a href="{{ url_for('admin.users_edit', user_id=user.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 14px;">Edit</a>
+                {% if user.account_status == 'pending_verification' and current_user.role == 'super_admin' %}
+                    <form method="POST" action="{{ url_for('admin.users_verify', user_id=user.id) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size: 14px;">Verify</button>
+                    </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="6" class="text-center text-muted" style="padding: 32px;">No users found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if users.pages > 1 %}
+<div style="margin-top: 24px; display: flex; justify-content: center; gap: 8px;">
+    {% if users.has_prev %}
+        <a href="{{ url_for('admin.users_list', page=users.prev_num, q=search, role=role_filter, status=status_filter) }}" class="btn btn-secondary">← Previous</a>
+    {% endif %}
+    <span style="padding: 10px 16px; color: var(--muted);">Page {{ users.page }} of {{ users.pages }}</span>
+    {% if users.has_next %}
+        <a href="{{ url_for('admin.users_list', page=users.next_num, q=search, role=role_filter, status=status_filter) }}" class="btn btn-secondary">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+</div>
+{% endblock %}

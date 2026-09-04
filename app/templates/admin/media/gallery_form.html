@@ -1,0 +1,87 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{% if editing %}Edit Gallery{% else %}New Gallery{% endif %} — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<h1 style="margin-bottom: 24px; color: var(--brand-primary);">
+    {% if editing %}Edit: {{ gallery.title }}{% else %}New Gallery{% endif %}
+</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="card" style="margin-bottom: 24px;">
+        <div class="form-group">
+            {{ form.title.label }}
+            {{ form.title(class="form-control") }}
+            {% for error in form.title.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", rows=4) }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.event_id.label }}
+                {{ form.event_id(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.published_at.label }}
+                {{ form.published_at(class="form-control") }}
+                <small class="text-muted">Leave blank to keep as a draft.</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            {{ form.cover_image.label }}
+            {{ form.cover_image(class="form-control") }}
+            {% if editing and gallery.cover_image %}
+                <div style="margin-top: 12px;">
+                    <img src="{{ url_for('media.gallery_cover', gallery_id=gallery.id) }}" alt="" style="max-width: 200px; border-radius: var(--radius);">
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.images.label }}
+            {{ form.images(class="form-control", multiple=true) }}
+            <small class="text-muted">Select one or more images to add to this gallery. Existing images are kept.</small>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+        <button type="submit" class="btn btn-primary">Save Gallery</button>
+        <a href="{{ url_for('admin.galleries_list') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+{% if editing %}
+<div class="card" style="margin-top: 24px;">
+    <h2 style="margin-bottom: 16px;">Images in this gallery</h2>
+
+    {% if gallery.images %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;">
+            {% for image in gallery.images %}
+            <div style="border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+                <img src="{{ url_for('media.gallery_image', image_id=image.id) }}" alt="{{ image.alt_text or '' }}" style="width: 100%; height: 110px; object-fit: cover; display: block;">
+                <div style="padding: 8px; font-size: 12px;">
+                    <div class="text-muted" style="margin-bottom: 6px;">
+                        Order: {{ image.display_order }}
+                        {% if image.caption %}<br>{{ image.caption|truncate(40) }}{% endif %}
+                    </div>
+                    <form method="POST" action="{{ url_for('admin.gallery_image_delete', gallery_id=gallery.id, image_id=image.id) }}" onsubmit="return confirm('Remove this image?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger" style="width: 100%; padding: 4px 8px; font-size: 12px;">Remove</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">No images yet — use the "Add Images" field above to upload some.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

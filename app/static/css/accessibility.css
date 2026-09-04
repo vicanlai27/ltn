@@ -1,0 +1,195 @@
+/**
+ * Lavisco News — Accessibility & Polish
+ * Loaded after main.css. Handles focus states, reduced motion,
+ * high contrast, and print.
+ */
+
+/* Skip link (already in critical CSS, but full version here) */
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--brand-primary);
+    color: white;
+    padding: 10px 18px;
+    z-index: 10000;
+    font-weight: 600;
+    border-radius: 0 0 6px 0;
+}
+.skip-link:focus {
+    left: 0;
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Focus-visible: only show focus ring for keyboard users */
+:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Ensure interactive elements have visible focus */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Reduced motion: respect user preference globally */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .hero-story__media img,
+    .story-card__media img,
+    .video-card__media img {
+        transition: none !important;
+    }
+}
+
+/* High contrast / forced colors mode */
+@media (forced-colors: active) {
+    .btn,
+    .badge,
+    .story-card,
+    .house-card,
+    .club-card,
+    .event-card {
+        border: 1px solid ButtonText;
+    }
+    .btn-primary {
+        background: Highlight;
+        color: HighlightText;
+    }
+}
+
+/* Touch target sizing (WCAG 2.5.5 — 44x44 minimum) */
+@media (pointer: coarse) {
+    .icon-btn,
+    .share-btn,
+    .reaction-bar__btn,
+    .pagination__btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+    .primary-nav a {
+        padding: 10px 14px;
+    }
+}
+
+/* Screen reader only utility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+.sr-only--focusable:focus,
+.sr-only--focusable:active {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+}
+
+/* Print styles (comprehensive) */
+@media print {
+    /* Hide non-essential UI */
+    .site-header,
+    .primary-nav,
+    .mobile-menu,
+    .site-footer,
+    .share-buttons,
+    .reaction-bar,
+    .audio-player,
+    .announcement-banner,
+    .announcement-modal,
+    .theme-decorations,
+    #theme-toggle,
+    #menu-toggle,
+    .poll-card__form,
+    .pagination,
+    nav[aria-label="Breadcrumb"] {
+        display: none !important;
+    }
+
+    /* Reset colors for print */
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 11pt;
+        line-height: 1.5;
+    }
+
+    /* Show URLs after links */
+    .article-body a[href^="http"]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.85em;
+        color: #555;
+        word-break: break-all;
+    }
+
+    /* Images */
+    img {
+        max-width: 100% !important;
+        page-break-inside: avoid;
+    }
+    figure {
+        page-break-inside: avoid;
+    }
+
+    /* Headings */
+    h1, h2, h3, h4 {
+        page-break-after: avoid;
+        color: black !important;
+    }
+
+    /* Article layout for print */
+    .article-header__title {
+        font-size: 22pt;
+        margin-bottom: 0.5em;
+    }
+    .article-body {
+        font-size: 11pt;
+    }
+
+    /* Page setup */
+    @page {
+        margin: 2cm;
+    }
+
+    /* Avoid orphaned headings */
+    h1, h2, h3 {
+        break-after: avoid;
+        break-inside: avoid;
+    }
+}
+/* Scroll reveal animation */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}

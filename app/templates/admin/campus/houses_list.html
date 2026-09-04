@@ -1,0 +1,47 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Houses — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="color: var(--brand-primary);">Houses</h1>
+    <a href="{{ url_for('admin.houses_new') }}" class="btn btn-primary">+ New House</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+    {% for house in houses %}
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            {% if house.color %}
+                <span style="width: 20px; height: 20px; border-radius: 50%; background: {{ house.color }}; display: inline-block; border: 1px solid var(--border);"></span>
+            {% endif %}
+            <h3 style="margin: 0;">
+                {{ house.name }}
+                {% if not house.is_active %}<span class="badge badge-info">Inactive</span>{% endif %}
+            </h3>
+        </div>
+
+        <div class="text-muted" style="font-size: 13px; margin-bottom: 8px;">
+            <code>{{ house.slug }}</code> · {{ house.house_points }} pts
+        </div>
+
+        {% if house.description %}
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">{{ house.description|truncate(100) }}</p>
+        {% endif %}
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <a href="{{ url_for('admin.houses_edit', house_id=house.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+            <form method="POST" action="{{ url_for('admin.houses_delete', house_id=house.id) }}" style="display: inline;" onsubmit="return confirm('Delete this house? This cannot be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <h3>No houses yet</h3>
+            <p>Create the first house to get started.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

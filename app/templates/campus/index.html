@@ -1,0 +1,207 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Campus — {{ site_name }}{% endblock %}
+{% block meta_description %}Holy Cross Lake View Wanyange: campus news, houses, clubs, sports, events, and student life.{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    {# Campus hero #}
+    <header class="campus-hero">
+        <div class="campus-hero__eyebrow"><img src="{{ url_for('static', filename='icon.png') }}" width="100px"></div>
+        <h1 class="campus-hero__title">Holy Cross Lake View Wanyange</h1>
+        <p class="campus-hero__subtitle">The heart of our newsroom — stories from our school community.</p>
+    </header>
+
+    {# Section grid #}
+    <section class="campus-sections" aria-label="Campus sections">
+        <div class="campus-sections__grid">
+            {% set icons = {
+                'campus-news': '📰', 'student-life': '🎒', 'academics': '📚',
+                'sports-games': '⚽', 'houses': '🏠', 'clubs-societies': '🎭',
+                'student-spotlight': '⭐', 'staff-spotlight': '👨‍🏫', 'campus-pulse': '📊',
+                'campus-calendar': '📅', 'campus-gallery': '📸', 'campus-shorts': '🎥',
+                'student-voice': '🗣️', 'alumni': '🎓', 'archive': '📜'
+            } %}
+            {% for slug, title, desc in sections %}
+                <a href="{{ url_for('campus.section', slug=slug) }}" class="campus-section-tile">
+                    <div class="campus-section-tile__icon">{{ icons.get(slug, '📌') }}</div>
+                    <h2 class="campus-section-tile__title">{{ title }}</h2>
+                    <p class="campus-section-tile__desc">{{ desc }}</p>
+                </a>
+            {% endfor %}
+            {# Model-backed sections #}
+            <a href="{{ url_for('campus.houses_index') }}" class="campus-section-tile">
+                <div class="campus-section-tile__icon">🏠</div>
+                <h2 class="campus-section-tile__title">Houses</h2>
+                <p class="campus-section-tile__desc">Standings, points, and house stories.</p>
+            </a>
+            <a href="{{ url_for('campus.clubs_index') }}" class="campus-section-tile">
+                <div class="campus-section-tile__icon">🎭</div>
+                <h2 class="campus-section-tile__title">Clubs & Societies</h2>
+                <p class="campus-section-tile__desc">Profiles, activities, and student-led content.</p>
+            </a>
+            <a href="{{ url_for('campus.sports_index') }}" class="campus-section-tile">
+                <div class="campus-section-tile__icon">⚽</div>
+                <h2 class="campus-section-tile__title">Sports Hub</h2>
+                <p class="campus-section-tile__desc">Fixtures, results, teams, and match reports.</p>
+            </a>
+            <a href="{{ url_for('campus.students_index') }}" class="campus-section-tile">
+                <div class="campus-section-tile__icon">⭐</div>
+                <h2 class="campus-section-tile__title">Student Spotlight</h2>
+                <p class="campus-section-tile__desc">Featured students and their stories.</p>
+            </a>
+            <a href="{{ url_for('campus.staff_index') }}" class="campus-section-tile">
+                <div class="campus-section-tile__icon">👨‍🏫</div>
+                <h2 class="campus-section-tile__title">Staff Spotlight</h2>
+                <p class="campus-section-tile__desc">Teachers and staff profiles.</p>
+            </a>
+            <a href="{{ url_for('campus.alumni_index') }}" class="campus-section-tile">
+                <div class="campus-section-tile__icon">🎓</div>
+                <h2 class="campus-section-tile__title">Alumni</h2>
+                <p class="campus-section-tile__desc">Where our graduates are now.</p>
+            </a>
+            <a href="{{ url_for('campus.calendar') }}" class="campus-section-tile">
+                <div class="campus-section-tile__icon">📅</div>
+                <h2 class="campus-section-tile__title">Campus Calendar</h2>
+                <p class="campus-section-tile__desc">Events, competitions, and major dates.</p>
+            </a>
+            <a href="{{ url_for('campus.gallery_index') }}" class="campus-section-tile">
+                <div class="campus-section-tile__icon">📸</div>
+                <h2 class="campus-section-tile__title">Campus Gallery</h2>
+                <p class="campus-section-tile__desc">Photo albums from school life.</p>
+            </a>
+            <a href="{{ url_for('campus.pulse') }}" class="campus-section-tile">
+                <div class="campus-section-tile__icon">📊</div>
+                <h2 class="campus-section-tile__title">Campus Pulse</h2>
+                <p class="campus-section-tile__desc">Polls and quick opinion snapshots.</p>
+            </a>
+        </div>
+    </section>
+
+    {# Highlights #}
+    {% if highlights %}
+    <section class="home-section" aria-label="Campus highlights">
+        <div class="section-header">
+            <h2>Campus Highlights</h2>
+        </div>
+        <div class="story-grid story-grid--3">
+            {% for article in highlights %}
+                {% include 'components/story_card.html' with context %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {# Two-column: standings + scoreboard #}
+    <section class="campus-duo">
+        <div class="campus-duo__col">
+            <div class="section-header">
+                <h2>🏠 House Standings</h2>
+                <a href="{{ url_for('campus.houses_index') }}">Full table →</a>
+            </div>
+            {% if standings %}
+                {% for house in standings %}
+                    {% set rank = loop.index %}
+                    {% include 'components/house_card.html' with context %}
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No houses configured yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="campus-duo__col">
+            <div class="section-header">
+                <h2>⚽ Scoreboard</h2>
+                <a href="{{ url_for('campus.sports_index') }}">All sports →</a>
+            </div>
+            {% include 'components/sports_scoreboard.html' with context %}
+        </div>
+    </section>
+
+    {# Upcoming events + polls #}
+    <section class="campus-duo">
+        <div class="campus-duo__col">
+            <div class="section-header">
+                <h2>📅 Upcoming Events</h2>
+                <a href="{{ url_for('campus.calendar') }}">Full calendar →</a>
+            </div>
+            {% if upcoming_events %}
+                {% for event in upcoming_events %}
+                    {% include 'components/event_card.html' with context %}
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No upcoming events.</p>
+            {% endif %}
+        </div>
+
+        <div class="campus-duo__col">
+            <div class="section-header">
+                <h2>📊 Campus Pulse</h2>
+                <a href="{{ url_for('campus.pulse') }}">All polls →</a>
+            </div>
+            {% if active_polls %}
+                {% for poll in active_polls %}
+                    {% include 'components/poll_card.html' with context %}
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No active polls right now.</p>
+            {% endif %}
+        </div>
+    </section>
+
+</div>
+
+<style>
+    .campus-hero {
+        text-align: center; padding: 40px 0 48px;
+        border-bottom: 1px solid var(--border); margin-bottom: 40px;
+    }
+    .campus-hero__eyebrow {
+        display: inline-block; font-size: 12px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.12em;
+        color: var(--accent); margin-bottom: 12px;
+    }
+    .campus-hero__title {
+        font-size: 36px; font-weight: 900; margin-bottom: 12px;
+    }
+    @media (min-width: 768px) { .campus-hero__title { font-size: 48px; } }
+    .campus-hero__subtitle {
+        font-size: 17px; color: var(--muted);
+        max-width: 560px; margin: 0 auto;
+    }
+
+    .campus-sections__grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px; margin-bottom: 48px;
+    }
+    .campus-section-tile {
+        display: block; padding: 20px;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); text-decoration: none;
+        transition: border-color 0.2s, transform 0.2s;
+    }
+    .campus-section-tile:hover {
+        border-color: var(--brand-primary);
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    .campus-section-tile__icon { font-size: 28px; margin-bottom: 10px; }
+    .campus-section-tile__title {
+        font-family: 'Inter', sans-serif;
+        font-size: 15px; font-weight: 700;
+        color: var(--text); margin-bottom: 6px;
+    }
+    .campus-section-tile__desc {
+        font-size: 13px; color: var(--muted); line-height: 1.45;
+    }
+
+    .campus-duo {
+        display: grid; grid-template-columns: 1fr;
+        gap: 32px; margin-bottom: 48px;
+    }
+    @media (min-width: 900px) {
+        .campus-duo { grid-template-columns: 1fr 1fr; }
+    }
+</style>
+{% endblock %}

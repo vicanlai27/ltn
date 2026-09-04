@@ -1,0 +1,40 @@
+{# Expects: live (list), upcoming (list), recent (list) #}
+<div class="scoreboard">
+    {% if live %}
+    <div class="scoreboard__section">
+        <h3 class="scoreboard__title">🔴 Live Now</h3>
+        {% for fixture in live %}
+            {% include 'components/fixture_card.html' with context %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if upcoming %}
+    <div class="scoreboard__section">
+        <h3 class="scoreboard__title">Upcoming</h3>
+        {% for fixture in upcoming %}
+            {% include 'components/fixture_card.html' with context %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if recent %}
+    <div class="scoreboard__section">
+        <h3 class="scoreboard__title">Recent Results</h3>
+        {% for fixture in recent %}
+            {% include 'components/fixture_card.html' with context %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .scoreboard__section { margin-bottom: 24px; }
+    .scoreboard__title {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--muted); margin-bottom: 12px;
+        padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+</style>

@@ -1,0 +1,83 @@
+{# Expects: poll #}
+<div class="poll-card" data-poll-id="{{ poll.id }}">
+    <h3 class="poll-card__question">{{ poll.question }}</h3>
+    {% if poll.description %}
+        <p class="poll-card__desc">{{ poll.description }}</p>
+    {% endif %}
+
+    <form class="poll-card__form" data-poll-form>
+        {% for option in poll.options %}
+            <label class="poll-card__option">
+                <input type="{% if poll.allow_multiple %}checkbox{% else %}radio{% endif %}"
+                       name="option" value="{{ option.id }}">
+                <span class="poll-card__option-label">{{ option.label }}</span>
+            </label>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary poll-card__submit">Vote</button>
+    </form>
+
+    <div class="poll-card__results" hidden>
+        {% set total = poll.options|map(attribute='vote_count')|sum %}
+        {% for option in poll.options %}
+            {% set pct = ((option.vote_count / total * 100) if total > 0 else 0)|round(1) %}
+            <div class="poll-card__result-row">
+                <div class="poll-card__result-label">{{ option.label }}</div>
+                <div class="poll-card__result-bar">
+                    <div class="poll-card__result-fill" style="width: {{ pct }}%"></div>
+                </div>
+                <div class="poll-card__result-pct">{{ pct }}%</div>
+            </div>
+        {% endfor %}
+        <div class="poll-card__total">{{ total }} vote{{ 's' if total != 1 else '' }}</div>
+    </div>
+</div>
+
+<style>
+    .poll-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 20px;
+    }
+    .poll-card__question {
+        font-family: 'Inter', sans-serif;
+        font-size: 18px; font-weight: 700;
+        margin-bottom: 8px; line-height: 1.3;
+    }
+    .poll-card__desc {
+        font-size: 14px; color: var(--muted);
+        margin-bottom: 16px;
+    }
+    .poll-card__option {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 12px; margin-bottom: 6px;
+        background: var(--background); border: 1px solid var(--border);
+        border-radius: var(--radius); cursor: pointer;
+        transition: border-color 0.2s;
+    }
+    .poll-card__option:hover { border-color: var(--brand-primary); }
+    .poll-card__option input { accent-color: var(--brand-primary); }
+    .poll-card__option-label { font-size: 14px; font-weight: 500; }
+    .poll-card__submit { margin-top: 12px; width: 100%; }
+
+    .poll-card__result-row {
+        display: grid; grid-template-columns: 1fr 2fr auto;
+        gap: 12px; align-items: center;
+        margin-bottom: 10px; font-size: 14px;
+    }
+    .poll-card__result-bar {
+        height: 8px; background: var(--border);
+        border-radius: 4px; overflow: hidden;
+    }
+    .poll-card__result-fill {
+        height: 100%; background: var(--brand-primary);
+        transition: width 0.6s ease;
+    }
+    .poll-card__result-pct { font-weight: 600; color: var(--brand-primary); }
+    .poll-card__total {
+        font-size: 12px; color: var(--muted);
+        margin-top: 12px; text-align: center;
+    }
+</style>
+
+{% block extra_scripts %}
+    <script src="{{ url_for('static', filename='js/engagement.js') }}" defer></script>
+{% endblock %}

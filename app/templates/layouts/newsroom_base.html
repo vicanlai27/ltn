@@ -1,0 +1,53 @@
+{% extends "layouts/base.html" %}
+
+{% block extra_head %}
+<style>
+    .newsroom-layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        min-height: calc(100vh - 200px);
+    }
+    .newsroom-sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        padding: 24px 0;
+    }
+    .newsroom-sidebar__title {
+        font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--muted); padding: 0 20px;
+        margin-bottom: 8px;
+    }
+    .newsroom-sidebar__link {
+        display: block; padding: 8px 20px;
+        color: var(--text); font-size: 14px;
+        text-decoration: none; transition: background 0.2s;
+    }
+    .newsroom-sidebar__link:hover { background: var(--background); text-decoration: none; }
+    .newsroom-sidebar__link.active { background: var(--brand-primary); color: white; }
+    .newsroom-content { padding: 32px; }
+    @media (max-width: 900px) {
+        .newsroom-layout { grid-template-columns: 1fr; }
+        .newsroom-sidebar { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="newsroom-layout">
+    <aside class="newsroom-sidebar">
+        <div class="newsroom-sidebar__title">Newsroom</div>
+        <a href="{{ url_for('newsroom.dashboard') }}" class="newsroom-sidebar__link {% if request.endpoint == 'newsroom.dashboard' %}active{% endif %}">My Dashboard</a>
+        <a href="{{ url_for('newsroom.articles_new') }}" class="newsroom-sidebar__link {% if request.endpoint == 'newsroom.articles_new' %}active{% endif %}">Write New Article</a>
+        <a href="{{ url_for('admin.notifications_list') }}" class="newsroom-sidebar__link {% if request.endpoint and 'notifications' in request.endpoint %}active{% endif %}">Notifications{% if unread_notifications %} <span class="badge">{{ unread_notifications }}</span>{% endif %}</a>
+        <a href="{{ url_for('auth.profile') }}" class="newsroom-sidebar__link">Settings</a>
+        {% if current_user.is_at_least('editor') %}
+            <a href="{{ url_for('admin.dashboard') }}" class="newsroom-sidebar__link">Staff Admin Console →</a>
+        {% endif %}
+    </aside>
+
+    <div class="newsroom-content">
+        {% block newsroom_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

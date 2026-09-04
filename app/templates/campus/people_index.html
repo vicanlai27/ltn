@@ -1,0 +1,97 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ title }} — Campus — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.index') }}">Campus</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>{{ title }}</span>
+    </nav>
+
+    <header class="archive-header">
+        <div class="archive-header__eyebrow">Campus</div>
+        <h1>{{ title }}</h1>
+    </header>
+
+    {% if featured %}
+    <section class="home-section">
+        <div class="section-header"><h2>Featured</h2></div>
+        <div class="people-grid">
+            {% for person in featured %}
+                {% set person_slug = person.slug %}
+                {% set person_name = person.name %}
+                {% set person_photo = person.photo %}
+                {% set person_meta = person.class_or_level if person_type == 'student' else (person.role if person_type == 'staff' else ('Class of ' ~ person.graduation_year if person.graduation_year else '')) %}
+                <a href="{{ url_for('campus.' ~ person_type ~ '_show', slug=person_slug) }}" class="person-mini">
+                    {% if person_photo %}
+                        <img src="{{ media_url(person_photo) }}" alt="" class="person-mini__photo">
+                    {% else %}
+                        <div class="person-mini__photo person-mini__photo--placeholder">{{ person_name[0]|upper }}</div>
+                    {% endif %}
+                    <div class="person-mini__name">{{ person_name }}</div>
+                    {% if person_meta %}<div class="person-mini__meta">{{ person_meta }}</div>{% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if people.items %}
+        <div class="people-grid people-grid--full">
+            {% for person in people.items %}
+                {% set person_slug = person.slug %}
+                {% set person_name = person.name %}
+                {% set person_photo = person.photo %}
+                {% set person_meta = person.class_or_level if person_type == 'student' else (person.role if person_type == 'staff' else ('Class of ' ~ person.graduation_year if person.graduation_year else '')) %}
+                <a href="{{ url_for('campus.' ~ person_type ~ '_show', slug=person_slug) }}" class="person-mini">
+                    {% if person_photo %}
+                        <img src="{{ media_url(person_photo) }}" alt="" class="person-mini__photo">
+                    {% else %}
+                        <div class="person-mini__photo person-mini__photo--placeholder">{{ person_name[0]|upper }}</div>
+                    {% endif %}
+                    <div class="person-mini__name">{{ person_name }}</div>
+                    {% if person_meta %}<div class="person-mini__meta">{{ person_meta }}</div>{% endif %}
+                </a>
+            {% endfor %}
+        </div>
+        {% with pagination=people, endpoint='campus.' ~ person_type ~ '_index', kwargs={} %}
+            {% include 'components/pagination.html' %}
+        {% endwith %}
+    {% elif not featured %}
+        <div class="empty-state">
+            <h3>No profiles yet</h3>
+            <p>{{ title }} profiles will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .people-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
+    }
+    .people-grid--full { margin-top: 24px; }
+    .person-mini {
+        text-align: center; text-decoration: none;
+        padding: 16px 12px; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--radius);
+        transition: border-color 0.2s, transform 0.2s;
+    }
+    .person-mini:hover { border-color: var(--brand-primary); transform: translateY(-2px); text-decoration: none; }
+    .person-mini__photo {
+        width: 80px; height: 80px; border-radius: 50%;
+        object-fit: cover; margin: 0 auto 10px;
+    }
+    .person-mini__photo--placeholder {
+        background: var(--brand-primary); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif; font-size: 32px; font-weight: 700;
+    }
+    .person-mini__name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .person-mini__meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+</style>
+{% endblock %}

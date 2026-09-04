@@ -1,0 +1,71 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{% if editing %}Edit Video{% else %}New Video{% endif %} — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<h1 style="margin-bottom: 24px; color: var(--brand-primary);">
+    {% if editing %}Edit: {{ video.title }}{% else %}New Video{% endif %}
+</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="card" style="margin-bottom: 24px;">
+        <div class="form-group">
+            {{ form.title.label }}
+            {{ form.title(class="form-control") }}
+            {% for error in form.title.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", rows=4) }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.category_id.label }}
+                {{ form.category_id(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ form.duration.label }}
+                {{ form.duration(class="form-control") }}
+                <small class="text-muted">In seconds. Videos 90s or under appear in Shorts.</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            {{ form.published_at.label }}
+            {{ form.published_at(class="form-control") }}
+            <small class="text-muted">Leave blank to keep as a draft.</small>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                {{ form.video_file.label }}
+                {{ form.video_file(class="form-control") }}
+                {% for error in form.video_file.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                {% if editing and video.video_url %}
+                    <small class="text-muted">Current file: <code>{{ video.video_url }}</code>. Leave blank to keep it.</small>
+                {% elif not editing %}
+                    <small class="text-muted">Required — .mp4 or .webm.</small>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.thumbnail.label }}
+                {{ form.thumbnail(class="form-control") }}
+                {% if editing and video.thumbnail %}
+                    <div style="margin-top: 12px;">
+                        <img src="{{ media_url(video.thumbnail) }}" alt="" style="max-width: 160px; border-radius: var(--radius);">
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px;">
+        <button type="submit" class="btn btn-primary">Save Video</button>
+        <a href="{{ url_for('admin.videos_list') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

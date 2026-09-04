@@ -1,0 +1,77 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Clubs & Societies — Campus — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.index') }}">Campus</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>Clubs & Societies</span>
+    </nav>
+
+    <header class="archive-header">
+        <div class="archive-header__eyebrow">Campus</div>
+        <h1>Clubs & Societies</h1>
+        <p class="archive-header__desc">Student-led communities shaping school life.</p>
+    </header>
+
+    {% if clubs %}
+        <div class="clubs-grid">
+            {% for club in clubs %}
+                <a href="{{ url_for('campus.club_show', slug=club.slug) }}" class="club-card">
+                    {% if club.logo %}
+                        <img src="{{ media_url(club.logo) }}" alt="" class="club-card__logo">
+                    {% else %}
+                        <div class="club-card__logo club-card__logo--placeholder">{{ club.name[0]|upper }}</div>
+                    {% endif %}
+                    <h2 class="club-card__name">{{ club.name }}</h2>
+                    {% if club.leader_name %}
+                        <div class="club-card__leader">Led by {{ club.leader_name }}</div>
+                    {% endif %}
+                    {% if club.description %}
+                        <p class="club-card__desc">{{ club.description|truncate(120) }}</p>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h3>No clubs yet</h3>
+            <p>Clubs will appear here once configured.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .clubs-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 20px;
+    }
+    .club-card {
+        display: block; padding: 24px; text-align: center;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); text-decoration: none;
+        transition: border-color 0.2s, transform 0.2s;
+    }
+    .club-card:hover { border-color: var(--brand-primary); transform: translateY(-2px); text-decoration: none; }
+    .club-card__logo {
+        width: 72px; height: 72px; border-radius: 50%;
+        object-fit: cover; margin: 0 auto 12px;
+    }
+    .club-card__logo--placeholder {
+        background: var(--brand-primary); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif; font-size: 28px; font-weight: 700;
+    }
+    .club-card__name {
+        font-family: 'Inter', sans-serif;
+        font-size: 17px; font-weight: 700;
+        color: var(--text); margin-bottom: 6px;
+    }
+    .club-card__leader { font-size: 13px; color: var(--accent); font-weight: 500; margin-bottom: 8px; }
+    .club-card__desc { font-size: 14px; color: var(--muted); line-height: 1.5; }
+</style>
+{% endblock %}

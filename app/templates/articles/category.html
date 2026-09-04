@@ -1,0 +1,39 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ category.name }} — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ category.description or 'Latest ' ~ category.name ~ ' stories from Lavisco News.' }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="archive-header">
+        <h1>{{ category.name }}</h1>
+        {% if category.description %}
+            <p class="archive-header__desc">{{ category.description }}</p>
+        {% endif %}
+    </header>
+
+    {% if articles.items %}
+        <div class="story-grid story-grid--3">
+            {% for article in articles.items %}
+                {% set show_category = false %}
+                {% include 'components/story_card.html' with context %}
+            {% endfor %}
+        </div>
+        {% with pagination=articles, endpoint='public.category', kwargs={'slug': category.slug} %}
+            {% include 'components/pagination.html' %}
+        {% endwith %}
+    {% else %}
+        <div class="empty-state">
+            <h3>No stories yet</h3>
+            <p>Stories in {{ category.name }} will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .archive-header { margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid var(--brand-secondary); position: relative; }
+    .archive-header::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 80px; height: 2px; background: var(--accent); }
+    .archive-header h1 { font-size: 36px; font-weight: 900; margin-bottom: 8px; }
+    .archive-header__desc { color: var(--muted); font-size: 16px; max-width: 640px; }
+</style>
+{% endblock %}

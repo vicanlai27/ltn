@@ -1,0 +1,152 @@
+{# Instagram share modal — expects: article #}
+<div class="ig-modal" id="ig-share-modal" hidden>
+    <div class="ig-modal__backdrop" data-ig-close></div>
+    <div class="ig-modal__content">
+        <button class="ig-modal__close" data-ig-close aria-label="Close">×</button>
+        <h2>Share to Instagram</h2>
+        <p class="ig-modal__desc">Download the card below, then post it to your Instagram story or feed.</p>
+
+        <div class="ig-modal__preview">
+            <img id="ig-card-preview" src="" alt="Instagram share card" style="max-width: 100%; border-radius: var(--radius);">
+        </div>
+
+        <div class="ig-modal__sizes">
+            <button class="btn btn-secondary" data-ig-size="square">Square (1:1)</button>
+            <button class="btn btn-secondary" data-ig-size="portrait">Portrait (4:5)</button>
+        </div>
+
+        <div class="ig-modal__actions">
+            <a href="#" id="ig-download-link" class="btn btn-primary" download>Download Card</a>
+            <button class="btn btn-secondary" id="ig-copy-caption">Copy Caption</button>
+        </div>
+
+        <div class="ig-modal__instructions">
+            <h3>How to share:</h3>
+            <ol>
+                <li>Download the card image</li>
+                <li>Open Instagram</li>
+                <li>Create a new post or story</li>
+                <li>Select the downloaded image</li>
+                <li>Add the caption (copy it above)</li>
+                <li>Share!</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<style>
+    .ig-modal {
+        position: fixed; inset: 0; z-index: 500;
+        display: flex; align-items: center; justify-content: center;
+        padding: 20px;
+    }
+    .ig-modal[hidden] { display: none; }
+    .ig-modal__backdrop {
+        position: absolute; inset: 0;
+        background: rgba(10, 31, 68, 0.8);
+    }
+    .ig-modal__content {
+        position: relative; background: var(--background);
+        border-radius: var(--radius); padding: 32px;
+        max-width: 520px; width: 100%;
+        max-height: 90vh; overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .ig-modal__close {
+        position: absolute; top: 12px; right: 12px;
+        background: transparent; border: none;
+        font-size: 28px; cursor: pointer;
+        color: var(--muted); width: 36px; height: 36px;
+        border-radius: 50%;
+    }
+    .ig-modal__close:hover { background: var(--surface); color: var(--text); }
+    .ig-modal h2 {
+        font-size: 22px; margin-bottom: 8px;
+        color: var(--brand-primary);
+    }
+    .ig-modal__desc {
+        font-size: 14px; color: var(--muted);
+        margin-bottom: 20px;
+    }
+    .ig-modal__preview {
+        background: var(--surface); border-radius: var(--radius);
+        padding: 16px; margin-bottom: 16px;
+        text-align: center;
+    }
+    .ig-modal__sizes {
+        display: flex; gap: 8px; margin-bottom: 16px;
+    }
+    .ig-modal__actions {
+        display: flex; gap: 8px; margin-bottom: 20px;
+    }
+    .ig-modal__instructions {
+        background: var(--surface); border-radius: var(--radius);
+        padding: 16px; font-size: 14px;
+    }
+    .ig-modal__instructions h3 {
+        font-family: 'Inter', sans-serif;
+        font-size: 13px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--accent); margin-bottom: 10px;
+    }
+    .ig-modal__instructions ol {
+        margin: 0; padding-left: 20px;
+    }
+    .ig-modal__instructions li {
+        margin-bottom: 6px; color: var(--text);
+    }
+</style>
+
+<script>
+    (function() {
+        const modal = document.getElementById('ig-share-modal');
+        if (!modal) return;
+
+        const articleId = {{ article.id }};
+        const preview = document.getElementById('ig-card-preview');
+        const downloadLink = document.getElementById('ig-download-link');
+        const copyCaptionBtn = document.getElementById('ig-copy-caption');
+        let currentSize = 'square';
+
+        function loadCard(size) {
+            currentSize = size;
+            const url = `/api/v1/articles/${articleId}/share-card?size=${size}`;
+            preview.src = url;
+            downloadLink.href = url;
+            downloadLink.download = `lavisco-card-${size}.png`;
+        }
+
+        // Size buttons
+        modal.querySelectorAll('[data-ig-size]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                loadCard(btn.getAttribute('data-ig-size'));
+            });
+        });
+
+        // Close buttons
+        modal.querySelectorAll('[data-ig-close]').forEach(el => {
+            el.addEventListener('click', () => {
+                modal.hidden = true;
+            });
+        });
+
+        // Copy caption
+        copyCaptionBtn.addEventListener('click', () => {
+            const title = {{ article.title|tojson }};
+            const url = window.location.href;
+            const caption = `${title}\n\nRead more at Lavisco News\n${url}\n\n#LaviscoNews #News`;
+            navigator.clipboard.writeText(caption).then(() => {
+                copyCaptionBtn.textContent = 'Copied!';
+                setTimeout(() => { copyCaptionBtn.textContent = 'Copy Caption'; }, 2000);
+            });
+        });
+
+        // Initial load
+        loadCard('square');
+
+        // Expose open function
+        window.openInstagramShare = function() {
+            modal.hidden = false;
+        };
+    })();
+</script>

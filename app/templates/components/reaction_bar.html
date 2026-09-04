@@ -1,0 +1,110 @@
+{# Reaction bar — expects: article #}
+{% set reaction_types = [
+    ('like', '👍', 'Like'),
+    ('love', '❤️', 'Love'),
+    ('laugh', '😂', 'Laugh'),
+    ('wow', '😮', 'Wow'),
+    ('angry', '😠', 'Angry'),
+    ('fire', '🔥', 'Fire'),
+] %}
+
+<div class="reaction-bar" data-article-id="{{ article.id }}" data-reaction-bar>
+    <div class="reaction-bar__label">React:</div>
+    <div class="reaction-bar__buttons">
+        {% for type, emoji, label in reaction_types %}
+            <button class="reaction-bar__btn" data-reaction-type="{{ type }}"
+                    aria-label="{{ label }}" title="{{ label }}">
+                <span class="reaction-bar__emoji">{{ emoji }}</span>
+                <span class="reaction-bar__count" data-count-for="{{ type }}">0</span>
+            </button>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .reaction-bar {
+        display: flex; align-items: center; gap: 12px;
+        padding: 16px 0; border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        margin: 24px 0; flex-wrap: wrap;
+    }
+    .reaction-bar__label {
+        font-size: 13px; font-weight: 600;
+        color: var(--muted); text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .reaction-bar__buttons {
+        display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .reaction-bar__btn {
+        display: flex; align-items: center; gap: 6px;
+        padding: 6px 12px; border-radius: 20px;
+        background: var(--surface); border: 1px solid var(--border);
+        cursor: pointer; transition: all 0.2s;
+        font-family: inherit; font-size: 14px;
+    }
+    .reaction-bar__btn:hover {
+        border-color: var(--brand-primary);
+        transform: translateY(-1px);
+    }
+    .reaction-bar__btn.active {
+        background: var(--brand-primary);
+        border-color: var(--brand-primary);
+        color: white;
+    }
+    .reaction-bar__emoji { font-size: 18px; }
+    .reaction-bar__count {
+        font-size: 13px; font-weight: 600;
+        color: var(--muted);
+    }
+    .reaction-bar__btn.active .reaction-bar__count { color: white; }
+</style>
+
+<script>
+    (function() {
+        const bar = document.querySelector('[data-reaction-bar]');
+        if (!bar) return;
+
+        const articleId = bar.getAttribute('data-article-id');
+        const buttons = bar.querySelectorAll('[data-reaction-type]');
+        let userReaction = null;
+
+        // Load initial state
+        fetch(`/api/v1/articles/${articleId}/reactions`)
+            .then(r => r.json())
+            .then(data => {
+                updateUI(data.counts, data.user_reaction);
+            })
+            .catch(() => {});
+
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.getAttribute('data-reaction-type');
+                fetch(`/api/v1/articles/${articleId}/reactions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type }),
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error(data.error);
+                        return;
+                    }
+                    updateUI(data.counts, data.user_reaction);
+                })
+                .catch(err => console.error(err));
+            });
+        });
+
+        function updateUI(counts, userReact) {
+            userReaction = userReact;
+            buttons.forEach(btn => {
+                const type = btn.getAttribute('data-reaction-type');
+                const countEl = btn.querySelector('[data-count-for]');
+                countEl.textContent = counts[type] || 0;
+                btn.classList.toggle('active', type === userReact);
+            });
+        }
+    })();
+</script>

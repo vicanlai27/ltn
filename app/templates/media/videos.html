@@ -1,0 +1,8 @@
+{% extends "layouts/base.html" %}
+{% block title %}Videos — {{ site_name }}{% endblock %}
+{% block content %}
+<div class="container">
+<header class="archive-header"><div class="archive-header__eyebrow">Multimedia</div><h1>Videos</h1><p class="archive-header__desc">Locally hosted videos from the newsroom.</p></header>
+{% if videos.items %}<div class="story-grid story-grid--3">{% for video in videos.items %}{% include 'components/video_card.html' with context %}{% endfor %}</div>{% with pagination=videos, endpoint='media.videos_feed', kwargs={} %}{% include 'components/pagination.html' %}{% endwith %}{% else %}<div class="empty-state"><h3>No videos yet</h3><p>Published newsroom videos will appear here.</p></div>{% endif %}
+</div>
+{% endblock %}

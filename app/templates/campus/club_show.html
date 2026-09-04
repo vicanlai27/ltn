@@ -1,0 +1,82 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ club.name }} — Clubs — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.index') }}">Campus</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.clubs_index') }}">Clubs</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>{{ club.name }}</span>
+    </nav>
+
+    <header class="club-profile">
+        {% if club.cover_image %}
+            <img src="{{ media_url(club.cover_image) }}" alt="" class="club-profile__cover">
+        {% endif %}
+        <div class="club-profile__header">
+            {% if club.logo %}
+                <img src="{{ media_url(club.logo) }}" alt="" class="club-profile__logo">
+            {% else %}
+                <div class="club-profile__logo club-profile__logo--placeholder">{{ club.name[0]|upper }}</div>
+            {% endif %}
+            <div>
+                <h1>{{ club.name }}</h1>
+                {% if club.leader_name %}
+                    <p class="club-profile__leader">Led by <strong>{{ club.leader_name }}</strong></p>
+                {% endif %}
+            </div>
+        </div>
+        {% if club.description %}<p class="club-profile__desc">{{ club.description }}</p>{% endif %}
+        {% if club.meeting_information %}
+            <div class="club-profile__meeting">
+                <strong>Meetings:</strong> {{ club.meeting_information }}
+            </div>
+        {% endif %}
+    </header>
+
+    {% if articles %}
+    <section class="home-section">
+        <div class="section-header"><h2>Stories</h2></div>
+        <div class="story-grid story-grid--3">
+            {% for article in articles %}
+                {% include 'components/story_card.html' with context %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<style>
+    .club-profile { margin-bottom: 40px; }
+    .club-profile__cover {
+        width: 100%; height: 200px; object-fit: cover;
+        border-radius: var(--radius); margin-bottom: 20px;
+    }
+    .club-profile__header {
+        display: flex; gap: 20px; align-items: center;
+        margin-bottom: 16px;
+    }
+    .club-profile__logo {
+        width: 96px; height: 96px; border-radius: 50%;
+        object-fit: cover; flex-shrink: 0;
+    }
+    .club-profile__logo--placeholder {
+        background: var(--brand-primary); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif; font-size: 40px; font-weight: 700;
+    }
+    .club-profile h1 { font-size: 32px; margin-bottom: 4px; }
+    .club-profile__leader { color: var(--muted); font-size: 15px; }
+    .club-profile__desc { font-size: 16px; line-height: 1.6; margin-bottom: 16px; max-width: 760px; }
+    .club-profile__meeting {
+        padding: 14px 18px; background: var(--surface);
+        border-left: 4px solid var(--accent);
+        border-radius: var(--radius); font-size: 14px;
+    }
+</style>
+{% endblock %}

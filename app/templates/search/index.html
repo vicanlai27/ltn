@@ -1,0 +1,72 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{% if q %}Search: {{ q }}{% else %}Search{% endif %} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="margin-bottom: 24px; font-size: 32px;">Search Lavisco</h1>
+
+    <form method="GET" class="search-form">
+        <div class="search-form__row">
+            <input type="search" name="q" value="{{ q }}" placeholder="Search stories, topics, people..." class="search-form__input" autofocus>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+        <div class="search-form__filters">
+            <select name="category">
+                <option value="">All categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.slug }}" {% if active_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="type">
+                <option value="">All types</option>
+                <option value="news_article" {% if active_type == 'news_article' %}selected{% endif %}>News</option>
+                <option value="opinion" {% if active_type == 'opinion' %}selected{% endif %}>Opinion</option>
+                <option value="analysis" {% if active_type == 'analysis' %}selected{% endif %}>Analysis</option>
+                <option value="explainer" {% if active_type == 'explainer' %}selected{% endif %}>Explainer</option>
+                <option value="interview" {% if active_type == 'interview' %}selected{% endif %}>Interview</option>
+            </select>
+        </div>
+    </form>
+
+    {% if results is not none %}
+        {% if results.items %}
+            <p class="search-count">{{ results.total }} result{{ 's' if results.total != 1 else '' }} for "<strong>{{ q }}</strong>"</p>
+            <div class="story-grid story-grid--3">
+                {% for article in results.items %}
+                    {% include 'components/story_card.html' with context %}
+                {% endfor %}
+            </div>
+            {% with pagination=results, endpoint='public.search', kwargs={'q': q, 'category': active_category, 'type': active_type} %}
+                {% include 'components/pagination.html' %}
+            {% endwith %}
+        {% else %}
+            <div class="empty-state">
+                <h3>No results found</h3>
+                <p>Try different keywords or remove filters.</p>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<style>
+    .search-form { margin-bottom: 32px; }
+    .search-form__row {
+        display: flex; gap: 8px; margin-bottom: 12px;
+    }
+    .search-form__input {
+        flex: 1; padding: 12px 16px;
+        border: 2px solid var(--border); border-radius: var(--radius);
+        background: var(--surface); color: var(--text);
+        font-size: 16px;
+    }
+    .search-form__input:focus { outline: none; border-color: var(--brand-primary); }
+    .search-form__filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    .search-form__filters select {
+        padding: 8px 12px; border: 1px solid var(--border);
+        border-radius: var(--radius); background: var(--surface);
+        color: var(--text); font-size: 14px;
+    }
+    .search-count { color: var(--muted); margin-bottom: 20px; font-size: 14px; }
+</style>
+{% endblock %}

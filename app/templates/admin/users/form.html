@@ -1,0 +1,90 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}{% if editing %}Edit User{% else %}Create User{% endif %} — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div style="max-width: 720px;">
+    <h1 style="margin-bottom: 32px; color: var(--brand-primary);">
+        {% if editing %}Edit User: {{ user.username }}{% else %}Create New User{% endif %}
+    </h1>
+
+    <div class="card">
+        {% if not editing and current_user.role == 'super_admin' %}
+        <div style="background: linear-gradient(135deg, rgba(11,60,140,.10), rgba(212,165,55,.16)); border: 1px solid rgba(11,60,140,.18); border-radius: 10px; padding: 16px; margin-bottom: 24px;">
+            <strong style="display: block; margin-bottom: 4px;">Superadmin account creation</strong>
+            <span class="text-muted">You can create any newsroom role, including admins and other superadmins. Accounts created here are active immediately and do not need a separate verification step.</span>
+        </div>
+        {% elif not editing %}
+        <div style="background: var(--surface); border-left: 3px solid var(--warning); padding: 12px 14px; margin-bottom: 24px;">
+            <strong style="display: block; margin-bottom: 4px;">Admin-created accounts</strong>
+            <span class="text-muted">New accounts remain pending until a superadmin verifies them.</span>
+        </div>
+        {% endif %}
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            {% if not editing %}
+            <div class="form-group">
+                {{ form.username.label }}
+                {{ form.username(class="form-control") }}
+                {% for error in form.username.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                {{ form.email.label }}
+                {{ form.email(class="form-control") }}
+                {% for error in form.email.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            {% if not editing %}
+            <div class="form-group">
+                {{ form.password.label }}
+                {{ form.password(class="form-control") }}
+                {% for error in form.password.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.display_name.label }}
+                {{ form.display_name(class="form-control") }}
+                <small class="text-muted">Display name for bylines and author profiles</small>
+                {% for error in form.display_name.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                {{ form.role.label }}
+                {{ form.role(class="form-control") }}
+                {% for error in form.role.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            {% if editing %}
+            <div class="form-group">
+                {{ form.account_status.label }}
+                {{ form.account_status(class="form-control") }}
+                {% for error in form.account_status.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button type="submit" class="btn btn-primary">
+                    {% if editing %}Update User{% else %}Create User{% endif %}
+                </button>
+                <a href="{{ url_for('admin.users_list') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

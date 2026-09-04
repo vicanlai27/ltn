@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>{{ request.host_url.rstrip('/') }}/</loc>
+        <changefreq>hourly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    {% for article in articles %}
+    <url>
+        <loc>{{ url_for('public.article', slug=article.slug, _external=True) }}</loc>
+        <lastmod>{{ article.updated_at.strftime('%Y-%m-%d') }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    {% endfor %}
+    {% for category in categories %}
+    <url>
+        <loc>{{ url_for('public.category', slug=category.slug, _external=True) }}</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.6</priority>
+    </url>
+    {% endfor %}
+    {% for author in authors %}
+    <url>
+        <loc>{{ url_for('public.author', slug=author.slug, _external=True) }}</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    {% endfor %}
+    {% for tag in tags %}
+    <url>
+        <loc>{{ url_for('public.tag', slug=tag.slug, _external=True) }}</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.4</priority>
+    </url>
+    {% endfor %}
+</urlset>

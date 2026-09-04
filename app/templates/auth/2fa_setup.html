@@ -1,0 +1,30 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Set up two-factor authentication — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+    <div class="section-header">
+        <h1>Set up two-factor authentication</h1>
+    </div>
+    <div class="card">
+        <p style="margin-bottom: 16px;">Scan this QR code with an authenticator app, then enter the generated six-digit code to finish setup.</p>
+        <div style="display: grid; grid-template-columns: minmax(180px, 220px) 1fr; gap: 24px; align-items: center;">
+            <img src="data:image/png;base64,{{ qr_base64 }}" alt="Two-factor setup QR code" width="220" height="220">
+            <div>
+                <p class="text-muted" style="font-size: 14px; margin-bottom: 16px;">If you cannot scan the code, enter this key manually:</p>
+                <code style="display: block; padding: 10px; background: var(--background); border: 1px solid var(--border); word-break: break-all; margin-bottom: 20px;">{{ secret }}</code>
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ form.code.label }}
+                        {{ form.code(class="form-control", inputmode="numeric", autocomplete="one-time-code", maxlength="6") }}
+                        {% for error in form.code.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                    </div>
+                    {{ form.submit(class="btn btn-primary") }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

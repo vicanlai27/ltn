@@ -1,0 +1,154 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ house.name }} — Houses — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.index') }}">Campus</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.houses_index') }}">Houses</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>{{ house.name }}</span>
+    </nav>
+
+    <header class="house-profile">
+        {% if house.logo %}
+            <img src="{{ media_url(house.logo) }}" alt="" class="house-profile__logo">
+        {% else %}
+            <div class="house-profile__logo house-profile__logo--placeholder"
+                 style="background: {{ house.color or 'var(--brand-primary)' }}">
+                {{ house.name[0]|upper }}
+            </div>
+        {% endif %}
+        <div class="house-profile__body">
+            <h1 style="color: {{ house.color or 'var(--brand-primary)' }}">{{ house.name }}</h1>
+            <div class="house-profile__points">
+                <span class="house-profile__points-value">{{ "{:,}".format(house.house_points or 0) }}</span>
+                <span class="house-profile__points-label">total points</span>
+            </div>
+            {% if house.description %}
+                <p class="house-profile__desc">{{ house.description }}</p>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if students %}
+    <section class="home-section">
+        <div class="section-header"><h2>Members</h2></div>
+        <div class="people-grid">
+            {% for student in students %}
+                <a href="{{ url_for('campus.student_show', slug=student.slug) }}" class="person-mini">
+                    {% if student.photo %}
+                        <img src="{{ media_url(student.photo) }}" alt="" class="person-mini__photo">
+                    {% else %}
+                        <div class="person-mini__photo person-mini__photo--placeholder">{{ student.name[0]|upper }}</div>
+                    {% endif %}
+                    <div class="person-mini__name">{{ student.name }}</div>
+                    {% if student.class_or_level %}<div class="person-mini__meta">{{ student.class_or_level }}</div>{% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if recent_scores %}
+    <section class="home-section">
+        <div class="section-header"><h2>Recent Points</h2></div>
+        <ul class="scores-list">
+            {% for score in recent_scores %}
+                <li class="scores-list__item">
+                    <span class="scores-list__points {% if score.points > 0 %}scores-list__points--pos{% else %}scores-list__points--neg{% endif %}">
+                        {{ '+' if score.points > 0 else '' }}{{ score.points }}
+                    </span>
+                    <div class="scores-list__body">
+                        <div class="scores-list__reason">{{ score.reason }}</div>
+                        <div class="scores-list__meta">
+                            {{ score.created_at.strftime('%b %d, %Y') }}
+                            {% if score.category %}· {{ score.category }}{% endif %}
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    {% if articles %}
+    <section class="home-section">
+        <div class="section-header"><h2>Stories</h2></div>
+        <div class="story-grid story-grid--3">
+            {% for article in articles %}
+                {% include 'components/story_card.html' with context %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<style>
+    .house-profile {
+        display: flex; gap: 24px; align-items: center;
+        margin-bottom: 40px; padding-bottom: 24px;
+        border-bottom: 1px solid var(--border);
+    }
+    .house-profile__logo {
+        width: 120px; height: 120px; border-radius: 50%;
+        object-fit: cover; flex-shrink: 0;
+    }
+    .house-profile__logo--placeholder {
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif; font-size: 48px; font-weight: 700;
+    }
+    .house-profile h1 { font-size: 36px; margin-bottom: 8px; }
+    .house-profile__points { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+    .house-profile__points-value {
+        font-family: 'Merriweather', serif;
+        font-size: 32px; font-weight: 700;
+    }
+    .house-profile__points-label {
+        font-size: 13px; color: var(--muted);
+        text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .house-profile__desc { color: var(--muted); max-width: 640px; }
+
+    .people-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
+    }
+    .person-mini {
+        text-align: center; text-decoration: none;
+        padding: 12px; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--radius);
+        transition: border-color 0.2s;
+    }
+    .person-mini:hover { border-color: var(--brand-primary); text-decoration: none; }
+    .person-mini__photo {
+        width: 72px; height: 72px; border-radius: 50%;
+        object-fit: cover; margin: 0 auto 8px;
+    }
+    .person-mini__photo--placeholder {
+        background: var(--brand-primary); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif; font-size: 28px; font-weight: 700;
+    }
+    .person-mini__name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .person-mini__meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .scores-list { list-style: none; }
+    .scores-list__item {
+        display: flex; gap: 16px; align-items: flex-start;
+        padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .scores-list__points {
+        font-family: 'Merriweather', serif;
+        font-size: 20px; font-weight: 700; min-width: 56px;
+    }
+    .scores-list__points--pos { color: var(--success); }
+    .scores-list__points--neg { color: var(--error); }
+    .scores-list__reason { font-weight: 500; margin-bottom: 4px; }
+    .scores-list__meta { font-size: 12px; color: var(--muted); }
+</style>
+{% endblock %}

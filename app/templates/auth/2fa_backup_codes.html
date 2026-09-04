@@ -1,0 +1,18 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Save your backup codes — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 620px;">
+    <div class="section-header">
+        <h1>Save your backup codes</h1>
+    </div>
+    <div class="card">
+        <p style="margin-bottom: 16px;">Store these codes somewhere safe. Each code can be used once if you lose access to your authenticator app.</p>
+        <ul style="columns: 2; list-style: none; padding: 16px; background: var(--background); border: 1px solid var(--border); margin-bottom: 20px;">
+            {% for code in backup_codes %}<li><code>{{ code }}</code></li>{% endfor %}
+        </ul>
+        <a href="{{ url_for('auth.profile') }}" class="btn btn-primary">Continue to profile</a>
+    </div>
+</div>
+{% endblock %}

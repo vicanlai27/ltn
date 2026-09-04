@@ -1,0 +1,64 @@
+{# Expects: house, rank (optional) #}
+<div class="house-card" style="{% if house.color %}--house-color: {{ house.color }};{% endif %}">
+    <div class="house-card__rank">
+        {% if rank is defined %}#{{ rank }}{% endif %}
+    </div>
+    {% if house.logo %}
+        <img src="{{ media_url(house.logo) }}" alt="" class="house-card__logo">
+    {% else %}
+        <div class="house-card__logo house-card__logo--placeholder">
+            {{ house.name[0]|upper }}
+        </div>
+    {% endif %}
+    <div class="house-card__body">
+        <h3 class="house-card__name">
+            <a href="{{ url_for('campus.house_show', slug=house.slug) }}">{{ house.name }}</a>
+        </h3>
+        <div class="house-card__points">
+            <span class="house-card__points-value">{{ "{:,}".format(house.house_points or 0) }}</span>
+            <span class="house-card__points-label">points</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    .house-card {
+        display: flex; align-items: center; gap: 16px;
+        padding: 16px; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--radius);
+        border-left: 4px solid var(--house-color, var(--brand-primary));
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .house-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .house-card__rank {
+        font-family: 'Merriweather', serif;
+        font-size: 14px; font-weight: 700;
+        color: var(--muted); min-width: 28px;
+    }
+    .house-card__logo {
+        width: 48px; height: 48px; border-radius: 50%;
+        object-fit: cover; flex-shrink: 0;
+    }
+    .house-card__logo--placeholder {
+        background: var(--house-color, var(--brand-primary));
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif; font-size: 20px; font-weight: 700;
+    }
+    .house-card__body { flex: 1; min-width: 0; }
+    .house-card__name {
+        font-family: 'Inter', sans-serif;
+        font-size: 16px; font-weight: 600; margin-bottom: 4px;
+    }
+    .house-card__name a { color: var(--text); }
+    .house-card__name a:hover { color: var(--brand-primary); }
+    .house-card__points { display: flex; align-items: baseline; gap: 6px; }
+    .house-card__points-value {
+        font-family: 'Merriweather', serif;
+        font-size: 20px; font-weight: 700;
+        color: var(--brand-primary);
+    }
+    .house-card__points-label {
+        font-size: 12px; color: var(--muted);
+        text-transform: uppercase; letter-spacing: 0.05em;
+    }
+</style>

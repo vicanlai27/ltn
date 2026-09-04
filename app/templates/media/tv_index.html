@@ -1,0 +1,207 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Lavisco TV{% if live and live.is_live %} — Live Now{% endif %} — {{ site_name }}{% endblock %}
+{% block meta_description %}Lavisco TV: video coverage from Lavisco News, indexed from our YouTube channel. Watch live when we're broadcasting.{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="podcast-hero">
+        <div class="podcast-hero__brand">📺 Lavisco TV</div>
+        <h1 class="podcast-hero__title">Video &amp; Live Coverage</h1>
+        <p class="podcast-hero__subtitle">Everything we publish on YouTube — indexed here, with the live stream front and center whenever we're on air.</p>
+    </header>
+
+    <section id="tv-live-section" class="tv-live-section" {% if not (live and live.is_live) %}hidden{% endif %}>
+        <div class="tv-live-badge"><span class="live-dot"></span> LIVE NOW</div>
+        <div class="tv-player">
+            <iframe id="tv-live-frame"
+                    src="https://www.youtube.com/embed/{{ live.video_id if live else '' }}?autoplay=0"
+                    title="Lavisco TV live stream"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+        </div>
+        <p id="tv-live-title" class="tv-live-title">{{ live.title if live else '' }}</p>
+    </section>
+
+    <section id="tv-offline-notice" class="tv-offline-notice" {% if live and live.is_live %}hidden{% endif %}>
+        <p>Lavisco TV isn't live right now — this page checks automatically and will switch over the moment we go live.</p>
+        <a href="https://www.youtube.com/{{ youtube_handle }}?sub_confirmation=1" target="_blank" rel="noopener" class="btn btn-secondary">Subscribe on YouTube</a>
+    </section>
+
+    <section class="home-section">
+        <div class="section-header">
+            <h2>Latest Uploads</h2>
+            <a href="https://www.youtube.com/{{ youtube_handle }}/videos" target="_blank" rel="noopener">All videos on YouTube →</a>
+        </div>
+
+        {% if videos %}
+        <div class="tv-grid">
+            {% for v in videos %}
+                <button type="button" class="tv-card" data-video-id="{{ v.video_id }}" data-title="{{ v.title }}">
+                    <span class="tv-card__thumb-wrap">
+                        <img src="{{ v.thumbnail }}"
+                             data-fallbacks="{{ v.thumbnail_fallbacks|join(',') }}"
+                             onerror="window.__tvThumbFallback(this)"
+                             alt="" loading="lazy" class="tv-card__thumb">
+                        <span class="tv-card__play">▶</span>
+                    </span>
+                    <span class="tv-card__title">{{ v.title }}</span>
+                    {% if v.published_at %}
+                        <span class="tv-card__date">{{ v.published_at[:10] }}</span>
+                    {% endif %}
+                </button>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>No videos indexed yet</h3>
+            <p>Check back soon, or visit the channel directly on YouTube.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <div id="tv-modal" class="tv-modal" hidden>
+        <div class="tv-modal__backdrop" data-close></div>
+        <div class="tv-modal__inner">
+            <button type="button" class="tv-modal__close" data-close aria-label="Close video">&times;</button>
+            <div class="tv-player">
+                <iframe id="tv-modal-frame" src="" title="Lavisco TV video" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tv-live-section { margin-bottom: 40px; }
+    .tv-live-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: #DC2626; color: #fff; font-weight: 700;
+        font-size: 13px; letter-spacing: 0.05em;
+        padding: 6px 12px; border-radius: var(--radius);
+        margin-bottom: 12px;
+    }
+    .tv-live-badge .live-dot { background: #fff; }
+    .tv-player {
+        position: relative; width: 100%; padding-top: 56.25%;
+        background: #000; border-radius: var(--radius); overflow: hidden;
+    }
+    .tv-player iframe {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
+    }
+    .tv-live-title { margin-top: 12px; font-weight: 600; }
+    .tv-offline-notice {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 20px; margin-bottom: 40px;
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 16px; flex-wrap: wrap;
+    }
+    .tv-offline-notice p { color: var(--muted); margin: 0; }
+
+    .tv-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 20px;
+    }
+    .tv-card {
+        display: flex; flex-direction: column; text-align: left;
+        background: none; border: none; padding: 0; cursor: pointer;
+        font-family: inherit; color: var(--text);
+    }
+    .tv-card__thumb-wrap {
+        position: relative; display: block; width: 100%;
+        padding-top: 56.25%; border-radius: var(--radius); overflow: hidden;
+        background: var(--surface);
+    }
+    .tv-card__thumb {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        object-fit: cover;
+    }
+    .tv-card__play {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 44px; height: 44px; border-radius: 50%;
+        background: rgba(0,0,0,0.6); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px; transition: background 0.2s;
+    }
+    .tv-card:hover .tv-card__play { background: var(--brand-primary); }
+    .tv-card__title {
+        margin-top: 10px; font-weight: 600; font-size: 15px; line-height: 1.35;
+    }
+    .tv-card__date { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .tv-modal {
+        position: fixed; inset: 0; z-index: 200;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .tv-modal[hidden] { display: none; }
+    .tv-modal__backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.85); }
+    .tv-modal__inner {
+        position: relative; width: min(920px, 92vw); z-index: 1;
+    }
+    .tv-modal__close {
+        position: absolute; top: -40px; right: 0; background: none; border: none;
+        color: #fff; font-size: 28px; cursor: pointer; line-height: 1;
+    }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+    var modal = document.getElementById('tv-modal');
+    var modalFrame = document.getElementById('tv-modal-frame');
+
+    function openVideo(videoId) {
+        modalFrame.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1';
+        modal.hidden = false;
+    }
+    function closeModal() {
+        modal.hidden = true;
+        modalFrame.src = '';
+    }
+
+    document.querySelectorAll('.tv-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            openVideo(card.getAttribute('data-video-id'));
+        });
+    });
+
+    // Arriving from the homepage strip with #<video_id> opens that video directly.
+    if (window.location.hash) {
+        var targetId = window.location.hash.slice(1);
+        var match = document.querySelector('.tv-card[data-video-id="' + targetId + '"]');
+        if (match) openVideo(targetId);
+    }
+    modal.querySelectorAll('[data-close]').forEach(function(el) {
+        el.addEventListener('click', closeModal);
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+    // Flip this page live the moment the sitewide poller (base.html) detects it.
+    document.addEventListener('lavisco-tv-status', function(e) {
+        var status = e.detail;
+        var liveSection = document.getElementById('tv-live-section');
+        var offlineNotice = document.getElementById('tv-offline-notice');
+        var liveFrame = document.getElementById('tv-live-frame');
+        var liveTitle = document.getElementById('tv-live-title');
+        if (!status) return;
+
+        if (status.is_live) {
+            if (liveFrame.src.indexOf(status.video_id) === -1) {
+                liveFrame.src = 'https://www.youtube.com/embed/' + status.video_id + '?autoplay=0';
+            }
+            liveTitle.textContent = status.title || '';
+            liveSection.hidden = false;
+            offlineNotice.hidden = true;
+        } else {
+            liveSection.hidden = true;
+            offlineNotice.hidden = false;
+        }
+    });
+})();
+</script>
+{% endblock %}

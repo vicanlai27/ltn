@@ -1,0 +1,90 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ sport.name }} — Sports — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.index') }}">Campus</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.sports_index') }}">Sports</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>{{ sport.name }}</span>
+    </nav>
+
+    <header class="archive-header">
+        <div class="archive-header__eyebrow">Sport</div>
+        <h1>{{ sport.name }}</h1>
+        {% if sport.description %}<p class="archive-header__desc">{{ sport.description }}</p>{% endif %}
+    </header>
+
+    {% if teams %}
+    <section class="home-section">
+        <div class="section-header"><h2>Teams</h2></div>
+        <div class="teams-grid">
+            {% for team in teams %}
+                <div class="team-card">
+                    {% if team.logo %}
+                        <img src="{{ media_url(team.logo) }}" alt="" class="team-card__logo">
+                    {% else %}
+                        <div class="team-card__logo team-card__logo--placeholder">{{ team.name[0]|upper }}</div>
+                    {% endif %}
+                    <div>
+                        <h3 class="team-card__name">{{ team.name }}</h3>
+                        {% if team.season %}<div class="team-card__season">{{ team.season }}</div>{% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="campus-duo">
+        <div class="campus-duo__col">
+            <div class="section-header"><h2>Upcoming Fixtures</h2></div>
+            {% if upcoming %}
+                {% for fixture in upcoming %}
+                    {% include 'components/fixture_card.html' with context %}
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No upcoming fixtures.</p>
+            {% endif %}
+        </div>
+        <div class="campus-duo__col">
+            <div class="section-header"><h2>Completed</h2></div>
+            {% if completed %}
+                {% for fixture in completed %}
+                    {% include 'components/fixture_card.html' with context %}
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No completed matches yet.</p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+    .teams-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+    }
+    .team-card {
+        display: flex; gap: 12px; align-items: center;
+        padding: 14px; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--radius);
+    }
+    .team-card__logo {
+        width: 44px; height: 44px; border-radius: 50%;
+        object-fit: cover; flex-shrink: 0;
+    }
+    .team-card__logo--placeholder {
+        background: var(--brand-primary); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif; font-size: 18px; font-weight: 700;
+    }
+    .team-card__name { font-size: 15px; font-weight: 600; }
+    .team-card__season { font-size: 12px; color: var(--muted); }
+</style>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Campus Gallery — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ url_for('public.index') }}">Home</a>
+        <span class="breadcrumb__sep">/</span>
+        <a href="{{ url_for('campus.index') }}">Campus</a>
+        <span class="breadcrumb__sep">/</span>
+        <span>Gallery</span>
+    </nav>
+
+    <header class="archive-header">
+        <div class="archive-header__eyebrow">Campus</div>
+        <h1>Campus Gallery</h1>
+        <p class="archive-header__desc">Photo albums from events, sports, trips, and school life.</p>
+    </header>
+
+    {% if galleries.items %}
+        <div class="gallery-grid">
+            {% for gallery in galleries.items %}
+                <a href="{{ url_for('campus.gallery_show', slug=gallery.slug) }}" class="gallery-card">
+                    {% if gallery.cover_image %}
+                        <img src="{{ url_for('media.gallery_cover', gallery_id=gallery.id) }}" alt="" class="gallery-card__cover" loading="lazy">
+                    {% else %}
+                        <div class="gallery-card__cover gallery-card__cover--placeholder">📸</div>
+                    {% endif %}
+                    <div class="gallery-card__body">
+                        <h3 class="gallery-card__title">{{ gallery.title }}</h3>
+                        <div class="gallery-card__meta">
+                            {{ gallery.published_at.strftime('%b %d, %Y') }}
+                            · {{ gallery.images|length }} photo{{ 's' if gallery.images|length != 1 else '' }}
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+        {% with pagination=galleries, endpoint='campus.gallery_index', kwargs={} %}
+            {% include 'components/pagination.html' %}
+        {% endwith %}
+    {% else %}
+        <div class="empty-state">
+            <h3>No galleries yet</h3>
+            <p>Photo albums will appear here once published.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .gallery-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 20px;
+    }
+    .gallery-card {
+        display: block; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--radius);
+        overflow: hidden; text-decoration: none;
+        transition: border-color 0.2s, transform 0.2s;
+    }
+    .gallery-card:hover { border-color: var(--brand-primary); transform: translateY(-2px); text-decoration: none; }
+    .gallery-card__cover {
+        width: 100%; aspect-ratio: 16/10; object-fit: cover;
+    }
+    .gallery-card__cover--placeholder {
+        background: var(--brand-secondary); color: var(--accent);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 48px;
+    }
+    .gallery-card__body { padding: 16px; }
+    .gallery-card__title {
+        font-family: 'Inter', sans-serif;
+        font-size: 16px; font-weight: 600;
+        color: var(--text); margin-bottom: 6px;
+    }
+    .gallery-card__meta { font-size: 12px; color: var(--muted); }
+</style>
+{% endblock %}

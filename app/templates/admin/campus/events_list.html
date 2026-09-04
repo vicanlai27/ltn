@@ -1,0 +1,44 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Events — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="color: var(--brand-primary);">Campus Events</h1>
+    <a href="{{ url_for('admin.events_new') }}" class="btn btn-primary">+ New Event</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+    {% for event in events %}
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <h3 style="margin: 0;">{{ event.title }}</h3>
+            <span class="badge badge-info">{{ event.status }}</span>
+        </div>
+
+        <div class="text-muted" style="font-size: 13px; margin-bottom: 8px;">
+            {{ event.start_at.strftime('%b %d, %Y · %H:%M') if event.start_at else '—' }}
+            {% if event.event_type %}· {{ event.event_type }}{% endif %}
+        </div>
+
+        {% if event.location %}
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">📍 {{ event.location }}</p>
+        {% endif %}
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <a href="{{ url_for('campus.event_show', event_id=event.id) }}" class="btn btn-ghost" style="padding: 6px 12px; font-size: 13px;">View</a>
+            <a href="{{ url_for('admin.events_edit', event_id=event.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+            <form method="POST" action="{{ url_for('admin.events_delete', event_id=event.id) }}" style="display: inline;" onsubmit="return confirm('Delete this event? This cannot be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <h3>No events yet</h3>
+            <p>Create the first campus event to get started.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

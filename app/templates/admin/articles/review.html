@@ -1,0 +1,45 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Review Queue — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<h1 style="margin-bottom: 24px; color: var(--brand-primary);">Review Queue</h1>
+
+{% if articles %}
+    {% for article in articles %}
+    <div class="card" style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <div>
+                <h3 style="margin-bottom: 6px;">{{ article.title }}</h3>
+                <div class="text-muted" style="font-size: 13px;">
+                    By {% if article.author and article.author.author_profile %}{{ article.author.author_profile.display_name }}{% else %}Unknown{% endif %}
+                    · Submitted {{ article.updated_at.strftime('%b %d, %Y %H:%M') }}
+                </div>
+            </div>
+            <a href="{{ url_for('admin.articles_edit', article_id=article.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+        </div>
+
+        {% if article.excerpt %}
+            <p style="margin-bottom: 12px; color: var(--muted); font-size: 14px;">{{ article.excerpt }}</p>
+        {% endif %}
+
+        <div style="display: flex; gap: 8px;">
+            <form method="POST" action="{{ url_for('admin.articles_approve', article_id=article.id) }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">Approve for Audit</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.articles_reject', article_id=article.id) }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="notes" value="Rejected by editor">
+                <button type="submit" class="btn btn-danger" style="padding: 8px 16px;">Reject</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty-state">
+        <h3>No articles pending review</h3>
+        <p>Articles submitted by authors will appear here.</p>
+    </div>
+{% endif %}
+{% endblock %}

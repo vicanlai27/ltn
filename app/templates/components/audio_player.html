@@ -1,0 +1,116 @@
+{#
+  Audio player — inline player for articles and podcasts.
+  Expects: audio_url (str), title (str, optional), accent_color (str, optional)
+#}
+{% set player_id = 'audio-' ~ (audio_url|hash) %}
+{% set audio_file = audio_url.replace('static/', '', 1) if audio_url.startswith('static/') else audio_url %}
+
+<div
+    class="audio-player"
+    id="{{ player_id }}"
+    data-audio-player
+    data-src="{% if audio_file.startswith('http://') or audio_file.startswith('https://') %}{{ audio_file }}{% else %}{{ url_for('static', filename=audio_file) }}{% endif %}"
+>
+    <button class="audio-player__play" data-audio-play aria-label="Play">
+        <svg class="audio-player__icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="audio-player__icon-pause" viewBox="0 0 24 24" fill="currentColor" hidden><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+    </button>
+    <div class="audio-player__body">
+        <div class="audio-player__title">{{ title or 'Listen to this story' }}</div>
+        <div class="audio-player__controls">
+            <button class="audio-player__skip" data-audio-skip-back aria-label="Rewind 15 seconds">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5V1L7 6l5 5V7a6 6 0 0 1 6 6 6 6 0 0 1-6 6 6 6 0 0 1-6-6H4a8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8z"/></svg>
+            </button>
+            <div class="audio-player__progress" data-audio-progress>
+                <div class="audio-player__progress-fill" data-audio-fill></div>
+            </div>
+            <button class="audio-player__skip" data-audio-skip-forward aria-label="Forward 15 seconds">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);"><path d="M12 5V1L7 6l5 5V7a6 6 0 0 1 6 6 6 6 0 0 1-6 6 6 6 0 0 1-6-6H4a8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8z"/></svg>
+            </button>
+            <span class="audio-player__time" data-audio-time>0:00</span>
+            <select class="audio-player__speed" data-audio-speed aria-label="Playback speed">
+                <option value="0.75">0.75×</option>
+                <option value="1" selected>1×</option>
+                <option value="1.25">1.25×</option>
+                <option value="1.5">1.5×</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<style>
+    .audio-player {
+        display: flex; align-items: center; gap: 14px;
+        padding: 14px 18px;
+        background: linear-gradient(135deg, var(--brand-secondary) 0%, var(--brand-primary) 100%);
+        color: white; border-radius: var(--radius);
+        margin: 20px 0;
+        box-shadow: 0 4px 12px rgba(10, 31, 68, 0.15);
+    }
+    .audio-player__play {
+        flex-shrink: 0; width: 44px; height: 44px;
+        background: var(--accent); color: var(--brand-secondary);
+        border: none; border-radius: 50%;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        transition: transform 0.2s;
+    }
+    .audio-player__play:hover { transform: scale(1.05); }
+    .audio-player__play svg { width: 20px; height: 20px; }
+
+    .audio-player__body { flex: 1; min-width: 0; }
+    .audio-player__title {
+        font-size: 13px; font-weight: 600;
+        margin-bottom: 6px; opacity: 0.95;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .audio-player__title::before {
+        content: '🎧'; font-size: 14px;
+    }
+
+    .audio-player__controls {
+        display: flex; align-items: center; gap: 10px;
+    }
+    .audio-player__skip {
+        background: transparent; border: none;
+        color: white; cursor: pointer;
+        width: 28px; height: 28px;
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0.8;
+    }
+    .audio-player__skip:hover { opacity: 1; }
+    .audio-player__skip svg { width: 16px; height: 16px; }
+
+    .audio-player__progress {
+        flex: 1; height: 4px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 2px; cursor: pointer;
+        position: relative; overflow: hidden;
+    }
+    .audio-player__progress-fill {
+        position: absolute; left: 0; top: 0; bottom: 0;
+        width: 0%; background: var(--accent);
+        transition: width 0.1s linear;
+    }
+
+    .audio-player__time {
+        font-size: 12px; font-variant-numeric: tabular-nums;
+        min-width: 42px; text-align: right;
+        opacity: 0.9;
+    }
+
+    .audio-player__speed {
+        background: rgba(255,255,255,0.1);
+        color: white; border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 4px; padding: 2px 6px;
+        font-size: 11px; cursor: pointer;
+    }
+    .audio-player__speed option { background: var(--brand-secondary); color: white; }
+
+    @media (max-width: 480px) {
+        .audio-player { padding: 12px; gap: 10px; }
+        .audio-player__play { width: 38px; height: 38px; }
+        .audio-player__skip { display: none; }
+    }
+</style>
+
+<script src="{{ url_for('static', filename='js/audio_player.js') }}" defer></script>

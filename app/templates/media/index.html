@@ -1,0 +1,90 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Media — {{ site_name }}{% endblock %}
+{% block meta_description %}Videos, Shorts, Galleries, Podcasts and Lavisco TV from {{ site_name }}.{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="archive-header">
+        <div class="archive-header__eyebrow">Multimedia</div>
+        <h1>Media</h1>
+        <p class="archive-header__desc">Explore our latest videos, photo galleries, podcasts and Lavisco TV.</p>
+    </header>
+
+    <section class="media-section">
+        <div class="section-header"><h2>Videos</h2><a href="{{ url_for('media.videos_feed') }}">View all →</a></div>
+        {% if videos %}
+        <div class="story-grid story-grid--3">
+            {% for video in videos %}
+                {% include 'components/video_card.html' with context %}
+            {% endfor %}
+        </div>
+        {% else %}<div class="empty-state"><p>No published videos yet.</p></div>{% endif %}
+    </section>
+
+    <section class="media-section">
+        <div class="section-header"><h2>Shorts</h2><a href="{{ url_for('media.shorts_feed') }}">View all →</a></div>
+        {% if shorts %}
+        <div class="story-grid story-grid--3">
+            {% for video in shorts %}
+            <a href="{{ url_for('media.short_show', slug=video.slug) }}" class="video-card">
+                <div class="video-card__media">
+                    {% if video.thumbnail %}<img src="{{ media_url(video.thumbnail) }}" alt="{{ video.title }}" loading="lazy">{% else %}<div class="video-card__placeholder">🎥</div>{% endif %}
+                    <span class="video-card__play-icon">▶</span>
+                    {% if video.duration %}<span class="video-card__duration">{{ video.duration // 60 }}:{{ '%02d' % (video.duration % 60) }}</span>{% endif %}
+                </div>
+                <div class="video-card__body"><h3 class="video-card__title">{{ video.title }}</h3></div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}<div class="empty-state"><p>No published Shorts yet.</p></div>{% endif %}
+    </section>
+
+    <section class="media-section">
+        <div class="section-header"><h2>Photo Galleries</h2><a href="{{ url_for('campus.gallery_index') }}">View all →</a></div>
+        {% if galleries %}
+        <div class="gallery-grid">
+            {% for gallery in galleries %}
+            <a href="{{ url_for('media.gallery_show', slug=gallery.slug) }}" class="gallery-card">
+                {% if gallery.cover_image %}<img src="{{ url_for('media.gallery_cover', gallery_id=gallery.id) }}" alt="" class="gallery-card__cover" loading="lazy">{% else %}<div class="gallery-card__cover gallery-card__cover--placeholder">📸</div>{% endif %}
+                <div class="gallery-card__body"><h3 class="gallery-card__title">{{ gallery.title }}</h3><div class="gallery-card__meta">{{ gallery.published_at.strftime('%b %d, %Y') }} · {{ gallery.images|length }} photos</div></div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}<div class="empty-state"><p>No published galleries yet.</p></div>{% endif %}
+    </section>
+
+    <section class="media-section">
+        <div class="section-header"><h2>Lavisco Voices</h2><a href="{{ url_for('media.podcast_index') }}">View all →</a></div>
+        {% if podcasts %}
+        <div class="podcast-list">
+            {% for episode in podcasts %}
+                <a href="{{ url_for('media.podcast_show', slug=episode.slug) }}" class="podcast-ep">
+                    {% if episode.cover_image %}<img src="{{ media_url(episode.cover_image) }}" alt="" class="podcast-ep__cover" loading="lazy">{% else %}<div class="podcast-ep__cover podcast-ep__cover--placeholder">🎙️</div>{% endif %}
+                    <div class="podcast-ep__body"><h3 class="podcast-ep__title">{{ episode.title }}</h3><div class="podcast-ep__meta">{% if episode.published_at %}{{ episode.published_at.strftime('%b %d, %Y') }}{% endif %}</div></div>
+                </a>
+            {% endfor %}
+        </div>
+        {% else %}<div class="empty-state"><p>No published podcast episodes yet.</p></div>{% endif %}
+    </section>
+
+    <section class="media-tv-cta">
+        <div><div class="archive-header__eyebrow">Live & latest</div><h2>Lavisco TV</h2><p>Watch the latest uploads and live broadcasts from our YouTube channel.</p></div>
+        <a href="{{ url_for('media.tv_index') }}" class="btn btn-primary">Open Lavisco TV →</a>
+    </section>
+</div>
+
+<style>
+.media-section { margin: 42px 0; }
+.media-tv-cta { margin: 48px 0; padding: 28px; display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); }
+.media-tv-cta h2 { margin:4px 0 6px; }
+.media-tv-cta p { color:var(--muted); margin:0; }
+.gallery-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
+.gallery-card { display:block; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; text-decoration:none; }
+.gallery-card__cover { width:100%; aspect-ratio:16/10; object-fit:cover; display:block; }
+.gallery-card__cover--placeholder { display:flex; align-items:center; justify-content:center; background:var(--brand-secondary); color:var(--accent); font-size:42px; }
+.gallery-card__body { padding:14px; }
+.gallery-card__title { margin:0 0 6px; font-size:16px; }
+.gallery-card__meta { font-size:12px; color:var(--muted); }
+</style>
+{% endblock %}

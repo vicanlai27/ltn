@@ -1,0 +1,83 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Preview: {{ theme.name }} — Admin — {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Override CSS variables with theme colors for preview */
+    .theme-preview {
+        {% if theme.primary_color %}--brand-primary: {{ theme.primary_color }};{% endif %}
+        {% if theme.secondary_color %}--brand-secondary: {{ theme.secondary_color }};{% endif %}
+        {% if theme.accent_color %}--accent: {{ theme.accent_color }};{% endif %}
+        {% if theme.background_color %}--background: {{ theme.background_color }};{% endif %}
+        {% if theme.text_color %}--text: {{ theme.text_color }};{% endif %}
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="color: var(--brand-primary);">Preview: {{ theme.name }}</h1>
+    <div style="display: flex; gap: 8px;">
+        <a href="{{ url_for('admin.themes_edit', theme_id=theme.id) }}" class="btn btn-secondary">Edit</a>
+        <a href="{{ url_for('admin.themes_list') }}" class="btn btn-ghost">Back to Themes</a>
+    </div>
+</div>
+
+<div class="theme-preview" style="background: var(--background); color: var(--text); padding: 32px; border-radius: var(--radius); border: 1px solid var(--border);">
+    {# Simulated header #}
+    <div style="background: var(--brand-secondary); color: white; padding: 20px; border-radius: var(--radius); margin-bottom: 24px; border-bottom: 3px solid var(--accent);">
+        <div style="font-family: 'Merriweather', serif; font-size: 24px; font-weight: 900;">
+            Lavisco<span style="color: var(--accent);">News</span>
+        </div>
+        <div style="font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-top: 4px;">
+            News. Context. Truth.
+        </div>
+    </div>
+
+    {# Simulated section header #}
+    <div style="margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--brand-secondary); position: relative;">
+        <div style="position: absolute; bottom: -2px; left: 0; width: 60px; height: 2px; background: var(--accent);"></div>
+        <h2 style="font-size: 20px; font-weight: 900; text-transform: uppercase;">Trending Now</h2>
+    </div>
+
+    {# Simulated story cards #}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--brand-primary); margin-bottom: 6px;">Politics</div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text);">Sample Headline for Theme Preview</h3>
+            <div style="font-size: 12px; color: var(--muted);">By Jane Reporter · Aug 26, 2026</div>
+        </div>
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--brand-primary); margin-bottom: 6px;">Campus</div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text);">Inter-House Athletics Championship</h3>
+            <div style="font-size: 12px; color: var(--muted);">By John Mugisha · Aug 25, 2026</div>
+        </div>
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--brand-primary); margin-bottom: 6px;">Sports</div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text);">Holy Cross Seniors Win 3-1</h3>
+            <div style="font-size: 12px; color: var(--muted);">By Sarah Nabirye · Aug 24, 2026</div>
+        </div>
+    </div>
+
+    {# Simulated buttons #}
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button style="background: var(--brand-primary); color: white; padding: 10px 20px; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer;">Primary Button</button>
+        <button style="background: var(--surface); color: var(--text); padding: 10px 20px; border: 1px solid var(--border); border-radius: var(--radius); font-weight: 600; cursor: pointer;">Secondary Button</button>
+        <span style="background: var(--accent); color: var(--brand-secondary); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase;">Badge</span>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 24px;">
+    <h2 style="margin-bottom: 12px;">Theme Details</h2>
+    <table>
+        <tr><th>Type</th><td>{{ theme.theme_type|replace('_', ' ')|title }}</td></tr>
+        <tr><th>Priority</th><td>{{ theme.priority }}</td></tr>
+        <tr><th>Active</th><td>{{ 'Yes' if theme.is_active else 'No' }}</td></tr>
+        <tr><th>Start Date</th><td>{{ theme.start_date.strftime('%Y-%m-%d %H:%M') if theme.start_date else '—' }}</td></tr>
+        <tr><th>End Date</th><td>{{ theme.end_date.strftime('%Y-%m-%d %H:%M') if theme.end_date else '—' }}</td></tr>
+        <tr><th>Decoration Motif</th><td>{{ (theme.decoration_config or {}).get('motif') or 'None' }}</td></tr>
+        <tr><th>Animations</th><td>{{ (theme.animation_config or {}).get('enabled', [])|join(', ') or 'None' }}</td></tr>
+    </table>
+</div>
+{% endblock %}

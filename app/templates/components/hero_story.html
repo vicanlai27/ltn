@@ -1,0 +1,105 @@
+{# Hero story — large featured card for homepage top. #}
+<article class="hero-story">
+        {% if article.featured_image %}
+        <a href="{{ url_for('public.article', slug=article.slug) }}" class="hero-story__media">
+            {% set srcset = responsive_srcset(article.featured_image) %}
+            {% if srcset %}
+                <img srcset="{{ srcset }}"
+                     sizes="100vw"
+                     src="{{ media_url(article.featured_image) }}"
+                     alt="{{ article.featured_image_alt or article.title }}"
+                     {% if is_primary|default(false) %}
+                         fetchpriority="high"
+                     {% else %}
+                         loading="lazy"
+                     {% endif %}
+                     decoding="async"
+                     width="1600" height="900">
+            {% else %}
+                <img src="{{ media_url(article.featured_image) }}"
+                     alt="{{ article.featured_image_alt or article.title }}"
+                     {% if is_primary|default(false) %}fetchpriority="high"{% else %}loading="lazy"{% endif %}
+                     decoding="async"
+                     width="1600" height="900">
+            {% endif %}
+        </a>
+    {% endif %}
+    <div class="hero-story__overlay">
+        {% if article.is_breaking %}
+            <span class="hero-story__breaking">Breaking</span>
+        {% endif %}
+        {% if article.category %}
+            <a href="{{ url_for('public.category', slug=article.category.slug) }}" class="hero-story__category">
+                {{ article.category.name }}
+            </a>
+        {% endif %}
+        <h1 class="hero-story__title">
+            <a href="{{ url_for('public.article', slug=article.slug) }}">{{ article.title }}</a>
+        </h1>
+        {% if article.excerpt %}
+            <p class="hero-story__excerpt">{{ article.excerpt }}</p>
+        {% endif %}
+        <div class="hero-story__meta">
+            {% if article.author and article.author.author_profile %}
+                <span>By {{ article.author.author_profile.display_name }}</span>
+                <span>·</span>
+            {% endif %}
+            <time datetime="{{ (article.published_at or article.created_at).isoformat() }}">
+                {{ (article.published_at or article.created_at).strftime('%b %d, %Y') }}
+            </time>
+        </div>
+    </div>
+</article>
+
+<style>
+    .hero-story {
+        position: relative; border-radius: var(--radius);
+        overflow: hidden; background: var(--brand-secondary);
+        aspect-ratio: 16/9;
+    }
+    .hero-story__media {
+        position: absolute; inset: 0;
+    }
+    .hero-story__media img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform 0.5s;
+    }
+    .hero-story:hover .hero-story__media img { transform: scale(1.03); }
+    .hero-story__overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to top, rgba(10,31,68,0.95) 0%, rgba(10,31,68,0.6) 50%, rgba(10,31,68,0.1) 100%);
+        display: flex; flex-direction: column; justify-content: flex-end;
+        padding: 24px; color: white;
+    }
+    @media (min-width: 768px) { .hero-story__overlay { padding: 40px; } }
+    .hero-story__breaking {
+        display: inline-block; background: var(--error);
+        color: white; padding: 4px 10px; border-radius: 3px;
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.08em; margin-bottom: 10px;
+        align-self: flex-start;
+    }
+    .hero-story__category {
+        display: inline-block; color: var(--accent);
+        font-size: 12px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.1em; margin-bottom: 10px;
+    }
+    .hero-story__category:hover { text-decoration: underline; }
+    .hero-story__title {
+        font-size: 24px; font-weight: 900; line-height: 1.2;
+        margin-bottom: 10px;
+    }
+    @media (min-width: 768px) { .hero-story__title { font-size: 36px; } }
+    .hero-story__title a { color: white; text-decoration: none; }
+    .hero-story__excerpt {
+        font-size: 15px; line-height: 1.5;
+        max-width: 640px; margin-bottom: 12px;
+        display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+        opacity: 0.95;
+    }
+    .hero-story__meta {
+        font-size: 13px; opacity: 0.85;
+        display: flex; gap: 8px;
+    }
+</style>

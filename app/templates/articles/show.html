@@ -1,0 +1,471 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ article.title }} — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ article.excerpt or article.title }}{% endblock %}
+
+{% block social_meta %}
+    <meta property="og:site_name" content="{{ site_name }}">
+    <meta property="og:title" content="{{ article.title }}">
+    <meta property="og:description" content="{{ article.excerpt or '' }}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ meta.url }}">
+    {% if meta.image %}<meta property="og:image" content="{{ meta.image }}">{% endif %}
+    <meta property="article:published_time" content="{{ meta.published_at }}">
+    <meta property="article:modified_time" content="{{ meta.updated_at }}">
+    {% if meta.author %}<meta property="article:author" content="{{ meta.author }}">{% endif %}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ article.title }}">
+    <meta name="twitter:description" content="{{ article.excerpt or '' }}">
+    {% if meta.image %}<meta name="twitter:image" content="{{ meta.image }}">{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+    <script type="application/ld+json">{{ schema|tojson }}</script>
+{% endblock %}
+
+{#
+  Reading progress bar for long articles.
+  Include at top of article pages. Updates via scroll event.
+#}
+<div class="reading-progress" data-reading-progress aria-hidden="true">
+    <div class="reading-progress__bar" data-reading-progress-bar></div>
+</div>
+
+<style>
+    .reading-progress {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: transparent;
+        z-index: 99;
+        pointer-events: none;
+    }
+    .reading-progress__bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--brand-primary), var(--accent));
+        transition: width 0.1s ease-out;
+        will-change: width;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .reading-progress__bar { transition: none; }
+    }
+</style>
+
+<script>
+    (function() {
+        var bar = document.querySelector('[data-reading-progress-bar]');
+        if (!bar) return;
+
+        var ticking = false;
+        function update() {
+            var scrollTop = window.scrollY;
+            var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            var pct = docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0;
+            bar.style.width = pct + '%';
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', function() {
+            if (!ticking) {
+                window.requestAnimationFrame(update);
+                ticking = true;
+            }
+        }, { passive: true });
+
+        update();
+    })();
+</script>
+
+{% block content %}
+<article class="article-page">
+    <div class="container">
+
+        {# Breadcrumb #}
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="{{ url_for('public.index') }}">Home</a>
+            {% if article.category %}
+                <span class="breadcrumb__sep">/</span>
+                <a href="{{ url_for('public.category', slug=article.category.slug) }}">{{ article.category.name }}</a>
+            {% endif %}
+        </nav>
+
+        {# Header #}
+        <header class="article-header">
+            {% if article.category %}
+                <a href="{{ url_for('public.category', slug=article.category.slug) }}" class="article-header__category">
+                    {{ article.category.name }}
+                </a>
+            {% endif %}
+            {% if article.content_type != 'news_article' %}
+                <span class="badge badge-accent">{{ article.content_type|replace('_', ' ')|title }}</span>
+            {% endif %}
+
+            <h1 class="article-header__title">{{ article.title }}</h1>
+
+            <div class="article-header__meta">
+                {% if article.author and article.author.author_profile %}
+                    <span class="article-header__author">
+                        By <a href="{{ url_for('public.author', slug=article.author.author_profile.slug) }}">
+                            {{ article.author.author_profile.display_name }}
+                        </a>
+                    </span>
+                    <span class="article-header__sep">·</span>
+                {% endif %}
+                <time datetime="{{ (article.published_at or article.created_at).isoformat() }}">
+                    {{ (article.published_at or article.created_at).strftime('%B %d, %Y') }}
+                </time>
+                <span class="article-header__sep">·</span>
+                <span>{{ reading_time }} min read</span>
+            </div>
+
+            <div class="article-header__share">
+                {% include 'components/share_buttons.html' with context %}
+            </div>
+        </header>
+
+                {# Audio narration — "Listen to this story" #}
+        {% if article.audio_url %}
+            {% set audio_url = article.audio_url %}
+            {% set title = 'Listen to this story' %}
+            {% include 'components/audio_player.html' with context %}
+        {% endif %}
+
+        {# Featured image + gallery — readers can click through to a full
+           navigable view via the shared lightbox component below. #}
+        {% if article.gallery %}
+        <figure class="article-figure">
+            {% set cover = article.gallery[0] %}
+            <a href="{{ media_url(cover.src) }}" data-lightbox data-lightbox-alt="{{ cover.alt }}" data-lightbox-caption="{{ cover.caption }}">
+                <img src="{{ media_url(cover.src) }}" alt="{{ cover.alt }}">
+            </a>
+            {% if cover.caption %}
+                <figcaption>{{ cover.caption }}</figcaption>
+            {% endif %}
+
+            {% if article.gallery|length > 1 %}
+            <div class="article-gallery-strip">
+                <div class="article-gallery-strip__thumb article-gallery-strip__thumb--cover" aria-hidden="true">
+                    <img src="{{ media_url(cover.src) }}" alt="">
+                </div>
+                {% for item in article.gallery[1:] %}
+                    <a href="{{ media_url(item.src) }}" data-lightbox data-lightbox-alt="{{ item.alt }}" data-lightbox-caption="{{ item.caption }}"
+                       class="article-gallery-strip__thumb">
+                        <img src="{{ media_url(item.src) }}" alt="{{ item.alt }}">
+                    </a>
+                {% endfor %}
+                <div class="article-gallery-strip__hint">{{ article.gallery|length }} photos — click a thumbnail, or the main photo, to browse</div>
+            </div>
+            {% endif %}
+        </figure>
+        {% endif %}
+
+        {% if article.youtube_video_id %}
+        <div class="article-youtube-embed" aria-label="Related YouTube video">
+            <iframe
+                src="https://www.youtube-nocookie.com/embed/{{ article.youtube_video_id }}"
+                title="Related video for {{ article.title }}"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen></iframe>
+        </div>
+        {% endif %}
+
+        {# Body #}
+        <div class="article-body">
+            {{ article.body|safe }}
+        </div>
+
+        {# Tags #}
+        {% if article.tags %}
+        <div class="article-tags">
+            <span class="article-tags__label">Tags:</span>
+            {% for tag in article.tags %}
+                <a href="{{ url_for('public.tag', slug=tag.slug) }}" class="article-tags__tag">#{{ tag.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {# Author box #}
+        {% if article.author and article.author.author_profile %}
+        <aside class="author-box">
+            {% if article.author.author_profile.avatar %}
+                <img src="{{ media_url(article.author.author_profile.avatar) }}" alt="" class="author-box__avatar">
+            {% else %}
+                <div class="author-box__avatar author-box__avatar--placeholder">
+                    {{ article.author.author_profile.display_name[0]|upper }}
+                </div>
+            {% endif %}
+            <div class="author-box__body">
+                <div class="author-box__label">Written by</div>
+                <h3 class="author-box__name">
+                    <a href="{{ url_for('public.author', slug=article.author.author_profile.slug) }}">
+                        {{ article.author.author_profile.display_name }}
+                    </a>
+                </h3>
+                {% if article.author.author_profile.school_role %}
+                    <div class="author-box__role">{{ article.author.author_profile.school_role }}</div>
+                {% endif %}
+                {% if article.author.author_profile.bio %}
+                    <p class="author-box__bio">{{ article.author.author_profile.bio }}</p>
+                {% endif %}
+            </div>
+        </aside>
+        {% endif %}
+
+        {# Related #}
+        {% if related %}
+        <section class="related-articles" aria-label="Related stories">
+            <div class="section-header">
+                <h2>Related Stories</h2>
+            </div>
+            <div class="story-grid story-grid--3">
+                {% for article in related %}
+                    {% include 'components/story_card.html' with context %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+    </div>
+</article>
+
+<style>
+    .article-page { padding: 24px 0; }
+
+    .breadcrumb {
+        font-size: 13px; color: var(--muted);
+        margin-bottom: 20px;
+    }
+    .breadcrumb a { color: var(--muted); }
+    .breadcrumb a:hover { color: var(--brand-primary); }
+    .breadcrumb__sep { margin: 0 6px; }
+
+    .article-header { margin-bottom: 28px; max-width: 760px; }
+    .article-header__category {
+        display: inline-block; font-size: 12px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--brand-primary); margin-bottom: 12px;
+    }
+    .article-header__title {
+        font-size: 32px; font-weight: 900; line-height: 1.15;
+        margin-bottom: 16px;
+    }
+    @media (min-width: 768px) { .article-header__title { font-size: 44px; } }
+
+    .article-header__meta {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        font-size: 14px; color: var(--muted);
+        margin-bottom: 16px;
+    }
+    .article-header__author a { color: var(--text); font-weight: 500; }
+    .article-header__author a:hover { color: var(--brand-primary); }
+    .article-header__sep { color: var(--border); }
+
+    .article-header__share { margin-top: 16px; }
+
+    .article-figure { margin: 24px 0; }
+    .article-figure img {
+        width: 100%; border-radius: var(--radius);
+    }
+    .article-figure figcaption {
+        font-size: 13px; color: var(--muted);
+        margin-top: 8px; font-style: italic;
+    }
+    .article-figure > a { display: block; cursor: zoom-in; }
+
+    .article-youtube-embed {
+        position: relative;
+        width: 100%;
+        max-width: 900px;
+        aspect-ratio: 16 / 9;
+        margin: 28px 0 32px;
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: #000;
+    }
+    .article-youtube-embed iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+    .article-gallery-strip {
+        display: flex; align-items: center; gap: 8px;
+        flex-wrap: wrap; margin-top: 10px;
+    }
+    .article-gallery-strip__thumb {
+        display: block; width: 56px; height: 56px; flex-shrink: 0;
+        border-radius: 4px; overflow: hidden;
+        border: 2px solid transparent; cursor: zoom-in;
+    }
+    .article-gallery-strip__thumb img {
+        width: 100%; height: 100%; object-fit: cover;
+    }
+    .article-gallery-strip__thumb:hover { border-color: var(--accent); }
+    .article-gallery-strip__thumb--cover { cursor: default; opacity: 0.55; }
+    .article-gallery-strip__thumb--cover:hover { border-color: transparent; }
+    .article-gallery-strip__hint {
+        font-size: 12px; color: var(--muted); margin-left: 4px;
+    }
+
+    .article-body {
+        max-width: 760px;
+        font-size: 17px; line-height: 1.75;
+        color: var(--text);
+    }
+    .article-body p { margin-bottom: 1.4em; }
+    .article-body h2 {
+        font-size: 26px; margin: 1.8em 0 0.6em;
+    }
+    .article-body h3 {
+        font-size: 20px; margin: 1.5em 0 0.5em;
+    }
+    .article-body img {
+        max-width: 100%; height: auto; display: block;
+        margin: 1.5em 0; border-radius: var(--radius);
+    }
+    .article-body blockquote {
+        border-left: 4px solid var(--accent);
+        padding: 8px 20px; margin: 1.5em 0;
+        font-style: italic; color: var(--muted);
+        font-size: 19px;
+    }
+    .article-body a { text-decoration: underline; overflow-wrap: break-word; }
+    .article-body hr {
+        border: none;
+        border-top: 2px solid var(--border);
+        margin: 2.2em 0;
+    }
+    @media (max-width: 640px) {
+        .article-body { font-size: 16px; }
+        .article-body h2 { font-size: 22px; }
+        .article-body h3 { font-size: 18px; }
+        .article-body blockquote { font-size: 17px; padding: 8px 14px; }
+    }
+
+    .article-tags {
+        margin: 32px 0; padding: 20px 0;
+        border-top: 1px solid var(--border);
+        display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    }
+    .article-tags__label { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .article-tags__tag {
+        padding: 4px 12px; border-radius: 12px;
+        background: var(--surface); color: var(--brand-primary);
+        font-size: 13px; font-weight: 500;
+        border: 1px solid var(--border);
+    }
+    .article-tags__tag:hover { background: var(--brand-primary); color: white; text-decoration: none; }
+
+    .author-box {
+        display: flex; gap: 20px; align-items: flex-start;
+        padding: 24px; background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin: 32px 0;
+    }
+    .author-box__avatar {
+        width: 72px; height: 72px; border-radius: 50%;
+        object-fit: cover; flex-shrink: 0;
+    }
+    .author-box__avatar--placeholder {
+        background: var(--brand-primary); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Merriweather', serif;
+        font-size: 28px; font-weight: 700;
+    }
+    .author-box__label {
+        font-size: 11px; text-transform: uppercase;
+        letter-spacing: 0.1em; color: var(--muted);
+        margin-bottom: 4px;
+    }
+    .author-box__name {
+        font-family: 'Inter', sans-serif;
+        font-size: 18px; font-weight: 700; margin-bottom: 2px;
+    }
+    .author-box__name a { color: var(--text); }
+    .author-box__name a:hover { color: var(--brand-primary); }
+    .author-box__role {
+        font-size: 13px; color: var(--muted); margin-bottom: 8px;
+    }
+    .author-box__bio {
+        font-size: 14px; line-height: 1.5; color: var(--text);
+    }
+
+    .related-articles { margin-top: 48px; }
+    .article-share { margin: 32px 0; }
+    .share-btn--instagram:hover { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; border-color: transparent; }
+
+</style>
+        {# Reactions #}
+        {% include 'components/reaction_bar.html' with context %}
+
+        {# Share buttons with tracking #}
+        <div class="article-share">
+            <div class="section-header" style="margin-bottom: 12px;">
+                <h2 style="font-size: 14px;">Share this story</h2>
+            </div>
+            <div class="share-buttons">
+                <a class="share-btn share-btn--whatsapp" data-share-track data-article-id="{{ article.id }}" data-platform="whatsapp"
+                   href="https://wa.me/?text={{ (article.title ~ ' ' ~ request.url)|urlencode }}"
+                   target="_blank" rel="noopener" aria-label="Share on WhatsApp">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                </a>
+                <a class="share-btn share-btn--x" data-share-track data-article-id="{{ article.id }}" data-platform="x"
+                   href="https://x.com/intent/tweet?text={{ article.title|urlencode }}&url={{ request.url|urlencode }}"
+                   target="_blank" rel="noopener" aria-label="Share on X">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+                <a class="share-btn share-btn--facebook" data-share-track data-article-id="{{ article.id }}" data-platform="facebook"
+                   href="https://www.facebook.com/sharer/sharer.php?u={{ request.url|urlencode }}"
+                   target="_blank" rel="noopener" aria-label="Share on Facebook">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </a>
+                <button class="share-btn share-btn--instagram" data-ig-share aria-label="Share on Instagram">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                </button>
+                <button class="share-btn share-btn--copy" data-share-track data-article-id="{{ article.id }}" data-platform="copy_link" data-copy-link="{{ request.url }}" aria-label="Copy link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                </button>
+            </div>
+        </div>
+
+        {# Instagram share modal #}
+        {% include 'components/instagram_share_modal.html' with context %}
+
+        {# Lightbox for the featured image + gallery above #}
+        {% if article.gallery|length > 1 %}
+            {% include 'components/lightbox.html' with context %}
+        {% endif %}
+
+        {# Poll — created by the author when writing the article #}
+        {% if article.poll and article.poll.status in ('active', 'closed') %}
+        <div class="container" style="margin: 32px auto 0;">
+            {% set poll = article.poll %}
+            {% include 'components/poll_card.html' with context %}
+        </div>
+        {% endif %}
+
+<div id="article-report" class="card" style="margin:28px 0;padding:18px">
+  <h3 style="margin-bottom:8px">Report this story</h3>
+  <p class="text-muted" style="font-size:13px;margin-bottom:12px">See something that needs editorial attention? Tell us why.</p>
+  <form method="POST" action="{{ url_for('public.article_report', slug=article.slug) }}">
+    {{ report_form.hidden_tag() }}
+    {{ report_form.reason(class="form-control", rows=3, placeholder="Briefly explain the issue") }}
+    <button class="btn btn-secondary" style="margin-top:8px">Report to editors</button>
+  </form>
+</div>
+
+        {# Reader comments #}
+        <div class="container">
+            {% include 'components/comment_section.html' with context %}
+        </div>
+
+        {% block extra_scripts %}
+    <script src="{{ url_for('static', filename='js/engagement.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/comments.js') }}" defer></script>
+{% endblock %}
+{% endblock %}

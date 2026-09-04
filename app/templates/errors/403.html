@@ -1,0 +1,17 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}403 — Lavisco News{{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="text-align: center; padding: 80px 20px;">
+    <div style="font-size: 96px; font-weight: 900; color: var(--brand-primary); line-height: 1; margin-bottom: 16px;">404</div>
+    <h1 style="font-size: 28px; margin-bottom: 12px;">Forbidden</h1>
+    <p style="color: var(--muted); font-size: 16px; max-width: 480px; margin: 0 auto 24px;">
+        You don't have permission to view this page.
+    </p>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <a href="{{ url_for('public.index') }}" class="btn btn-primary">Go to homepage</a>
+        <a href="{{ url_for('public.search') }}" class="btn btn-secondary">Search Lavisco</a>
+    </div>
+</div>
+{% endblock %}

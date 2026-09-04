@@ -1,0 +1,43 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Teams — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="color: var(--brand-primary);">Teams</h1>
+    <a href="{{ url_for('admin.teams_new') }}" class="btn btn-primary">+ New Team</a>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+    {% for team in teams %}
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            {% if team.logo %}
+                <img src="{{ media_url(team.logo) }}" alt="" style="width: 32px; height: 32px; object-fit: cover; border-radius: var(--radius);">
+            {% endif %}
+            <h3 style="margin: 0;">
+                {{ team.name }}
+                {% if not team.is_active %}<span class="badge badge-info">Inactive</span>{% endif %}
+            </h3>
+        </div>
+
+        <div class="text-muted" style="font-size: 13px; margin-bottom: 12px;">
+            {{ team.sport.name }}{% if team.season %} · {{ team.season }}{% endif %}
+        </div>
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <a href="{{ url_for('admin.teams_edit', team_id=team.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+            <form method="POST" action="{{ url_for('admin.teams_delete', team_id=team.id) }}" style="display: inline;" onsubmit="return confirm('Delete this team? This cannot be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <h3>No teams yet</h3>
+            <p>Create a sport first, then add teams to it.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

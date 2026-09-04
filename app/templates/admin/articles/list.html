@@ -1,0 +1,95 @@
+{% extends "layouts/admin_base.html" %}
+
+{% block title %}Articles — Admin — {{ site_name }}{% endblock %}
+
+{% block admin_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="color: var(--brand-primary);">Articles</h1>
+    <a href="{{ url_for('admin.articles_new') }}" class="btn btn-primary">+ New Article</a>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+    <form method="GET" style="display: flex; gap: 12px;">
+        <select name="status" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);">
+            <option value="">All Statuses</option>
+            <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+            <option value="pending_review" {% if status_filter == 'pending_review' %}selected{% endif %}>Pending Review</option>
+            <option value="pending_audit" {% if status_filter == 'pending_audit' %}selected{% endif %}>Pending Audit</option>
+            <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+            <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+        </select>
+        <button type="submit" class="btn btn-secondary">Filter</button>
+    </form>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for article in articles.items %}
+        <tr>
+            <td>
+                <strong>{{ article.title|truncate(60) }}</strong>
+                {% if article.is_breaking %}<span class="badge badge-error" style="margin-left: 6px;">Breaking</span>{% endif %}
+            </td>
+            <td>
+                {% if article.author and article.author.author_profile %}
+                    {{ article.author.author_profile.display_name }}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if article.status == 'draft' %}
+                    <span class="badge badge-info">Draft</span>
+                {% elif article.status == 'pending_review' %}
+                    <span class="badge badge-warning">Pending Review</span>
+                {% elif article.status == 'pending_audit' %}
+                    <span class="badge badge-warning">Pending Audit</span>
+                {% elif article.status == 'published' %}
+                    <span class="badge badge-success">Published</span>
+                {% elif article.status == 'rejected' %}
+                    <span class="badge badge-error">Rejected</span>
+                {% endif %}
+            </td>
+            <td class="text-muted">{{ article.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>
+                <a href="{{ url_for('admin.articles_edit', article_id=article.id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Edit</a>
+                {% if article.status == 'published' %}
+                    <a href="{{ url_for('public.article', slug=article.slug) }}" class="btn btn-ghost" style="padding: 6px 12px; font-size: 13px;" target="_blank">View</a>
+                {% endif %}
+                {% if current_user.is_at_least('super_admin') %}
+                    <form method="POST" action="{{ url_for('admin.articles_delete', article_id=article.id) }}" style="display: inline;" onsubmit='return confirm({{ ("Delete \"" ~ (article.title|truncate(40)) ~ "\"? This cannot be undone.")|tojson }});'>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;">Delete</button>
+                    </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5" class="text-center text-muted" style="padding: 32px;">No articles found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if articles.pages > 1 %}
+<div style="margin-top: 24px; display: flex; justify-content: center; gap: 8px;">
+    {% if articles.has_prev %}
+        <a href="{{ url_for('admin.articles_list', page=articles.prev_num, status=status_filter) }}" class="btn btn-secondary">← Previous</a>
+    {% endif %}
+    <span style="padding: 10px 16px; color: var(--muted);">Page {{ articles.page }} of {{ articles.pages }}</span>
+    {% if articles.has_next %}
+        <a href="{{ url_for('admin.articles_list', page=articles.next_num, status=status_filter) }}" class="btn btn-secondary">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

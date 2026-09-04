@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+instance/
+app/static/uploads/
+.DS_Store
+*.log
+.vercel/

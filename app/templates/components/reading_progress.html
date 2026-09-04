@@ -1,0 +1,53 @@
+{#
+  Reading progress bar for long articles.
+  Include at top of article pages. Updates via scroll event.
+#}
+<div class="reading-progress" data-reading-progress aria-hidden="true">
+    <div class="reading-progress__bar" data-reading-progress-bar></div>
+</div>
+
+<style>
+    .reading-progress {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: transparent;
+        z-index: 99;
+        pointer-events: none;
+    }
+    .reading-progress__bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--brand-primary), var(--accent));
+        transition: width 0.1s ease-out;
+        will-change: width;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .reading-progress__bar { transition: none; }
+    }
+</style>
+
+<script>
+    (function() {
+        var bar = document.querySelector('[data-reading-progress-bar]');
+        if (!bar) return;
+
+        var ticking = false;
+        function update() {
+            var scrollTop = window.scrollY;
+            var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            var pct = docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0;
+            bar.style.width = pct + '%';
+            ticking = false;
+        }
+
+        window.addEventListener('scroll', function() {
+            if (!ticking) {
+                window.requestAnimationFrame(update);
+                ticking = true;
+            }
+        }, { passive: true });
+
+        update();
+    })();
+</script>

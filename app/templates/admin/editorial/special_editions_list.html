@@ -1,0 +1,9 @@
+{% extends "layouts/admin_base.html" %}
+{% block title %}Special Editions — Admin — {{ site_name }}{% endblock %}
+{% block admin_content %}
+<div class="page-head"><div><h1>Special Editions</h1><p class="text-muted">Curate themed packages of published stories.</p></div><a class="btn btn-primary" href="{{ url_for('admin.special_editions_new') }}">+ New Edition</a></div>
+<div class="card"><table><thead><tr><th>Edition</th><th>Window</th><th>Theme</th><th>Status</th><th></th></tr></thead><tbody>
+{% for e in editions %}<tr><td><strong>{{ e.title }}</strong><br><small>{{ e.slug }}</small></td><td>{{ e.start_at.strftime('%b %d, %Y') if e.start_at else 'Any time' }}{% if e.end_at %} — {{ e.end_at.strftime('%b %d, %Y') }}{% endif %}</td><td>{{ e.theme.name if e.theme else '—' }}</td><td>{{ 'Active' if e.is_active else 'Inactive' }}</td><td><a class="btn btn-secondary" href="{{ url_for('admin.special_editions_edit', edition_id=e.id) }}">Edit</a><form method="POST" action="{{ url_for('admin.special_editions_delete', edition_id=e.id) }}" style="display:inline" onsubmit="return confirm('Delete this edition?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-danger">Delete</button></form></td></tr>
+{% else %}<tr><td colspan="5" class="text-muted">No special editions yet.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endblock %}
