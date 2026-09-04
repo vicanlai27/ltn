@@ -78,6 +78,12 @@ def estimate_reading_time(body: str) -> int:
 
 def create_article(data: dict, author_id: int) -> Article:
     """Create a new article with tags."""
+    for fk in ['category_id', 'house_id', 'club_id', 'special_edition_id']:
+        of fk in data and (data[fk] == 0 or data[fk] == '0' or data[fk] == ''):
+            data[fk] = None
+
+    if not data.get('is_campus'):
+        pass
     article = Article(
         title=data["title"],
         slug=generate_unique_slug(data["title"]),
