@@ -22,6 +22,7 @@ class ArticleForm(FlaskForm):
     gallery_images = MultipleFileField("Additional Images", validators=[
         Optional(), FileAllowed(["jpg", "jpeg", "png", "webp"], "Images only!")
     ])
+    gallery_image_keys = HiddenField()  # comma-separated keys set by JS after direct-to-Supabase uploads
     youtube_video_id = StringField("YouTube Video ID", validators=[Optional()])
     youtube_video_url = StringField("Or paste a YouTube link/ID directly", validators=[Optional()])
     category_id = SelectField("Category", coerce=int, validators=[Optional()])

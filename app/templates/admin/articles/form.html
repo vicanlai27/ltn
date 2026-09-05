@@ -344,6 +344,7 @@
         <div class="form-group">
             {{ form.gallery_images.label }}
             {{ form.gallery_images(class="form-control", multiple=true) }}
+            {{ form.gallery_image_keys(id="gallery-image-keys") }}
             <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
                 Optional — add as many extra images as you like. Readers will be able to
                 navigate through the featured image plus these while reading the story.
@@ -566,6 +567,8 @@
     var audioInput = document.getElementById('audio-file-input');
     var audioKeyField = document.getElementById('audio-key');
     var audioDurationField = document.getElementById('audio-duration-hint');
+    var galleryInput = document.getElementById('gallery_images');
+    var galleryKeysField = document.getElementById('gallery-image-keys');
     var statusEl = document.getElementById('direct-upload-status');
     var readyToSubmit = false;
 
@@ -584,7 +587,8 @@
 
         var hasImage = imageInput && imageInput.files && imageInput.files.length > 0;
         var hasAudio = audioInput && audioInput.files && audioInput.files.length > 0;
-        if (!hasImage && !hasAudio) return; // nothing new to upload, submit normally
+        var hasGallery = galleryInput && galleryInput.files && galleryInput.files.length > 0;
+        if (!hasImage && !hasAudio && !hasGallery) return; // nothing new to upload, submit normally
 
         e.preventDefault();
 
@@ -607,6 +611,18 @@
                         audioDurationField.value = result.audio_duration;
                     }
                     audioInput.removeAttribute('name');
+                })
+            );
+        }
+        if (hasGallery) {
+            var galleryFiles = Array.prototype.slice.call(galleryInput.files);
+            setStatus('Uploading ' + galleryFiles.length + ' image' + (galleryFiles.length === 1 ? '' : 's') + '…');
+            tasks.push(
+                Promise.all(galleryFiles.map(function (file) {
+                    return DirectUpload.uploadFile(file, 'articles');
+                })).then(function (results) {
+                    galleryKeysField.value = results.map(function (r) { return r.key; }).join(',');
+                    galleryInput.removeAttribute('name'); // don't also re-send the raw bytes
                 })
             );
         }

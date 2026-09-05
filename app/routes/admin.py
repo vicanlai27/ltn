@@ -151,14 +151,20 @@ def articles_new():
 
         article = create_article(data, current_user.id)
 
-        # Additional gallery images (beyond the single featured image)
-        gallery_uploads = [
-            f for f in (form.gallery_images.data or [])
-            if f and hasattr(f, "filename") and f.filename
-        ]
-        if gallery_uploads:
-            saved_paths = [save_upload(f, "articles") for f in gallery_uploads]
-            add_gallery_images(article, saved_paths)
+        # Additional gallery images (beyond the single featured image) --
+        # prefer keys from direct-to-Supabase uploads; fall back to the old
+        # server-side path if JS didn't run for this field.
+        gallery_keys_raw = (data.get("gallery_image_keys") or "").strip()
+        if gallery_keys_raw:
+            add_gallery_images(article, [k.strip() for k in gallery_keys_raw.split(",") if k.strip()])
+        else:
+            gallery_uploads = [
+                f for f in (form.gallery_images.data or [])
+                if f and hasattr(f, "filename") and f.filename
+            ]
+            if gallery_uploads:
+                saved_paths = [save_upload(f, "articles") for f in gallery_uploads]
+                add_gallery_images(article, saved_paths)
 
         # Poll
         if form.enable_poll.data:
@@ -290,14 +296,20 @@ def articles_edit(article_id):
 
         update_article(article, data)
 
-        # Additional gallery images (beyond the single featured image)
-        gallery_uploads = [
-            f for f in (form.gallery_images.data or [])
-            if f and hasattr(f, "filename") and f.filename
-        ]
-        if gallery_uploads:
-            saved_paths = [save_upload(f, "articles") for f in gallery_uploads]
-            add_gallery_images(article, saved_paths)
+        # Additional gallery images (beyond the single featured image) --
+        # prefer keys from direct-to-Supabase uploads; fall back to the old
+        # server-side path if JS didn't run for this field.
+        gallery_keys_raw = (data.get("gallery_image_keys") or "").strip()
+        if gallery_keys_raw:
+            add_gallery_images(article, [k.strip() for k in gallery_keys_raw.split(",") if k.strip()])
+        else:
+            gallery_uploads = [
+                f for f in (form.gallery_images.data or [])
+                if f and hasattr(f, "filename") and f.filename
+            ]
+            if gallery_uploads:
+                saved_paths = [save_upload(f, "articles") for f in gallery_uploads]
+                add_gallery_images(article, saved_paths)
 
         # Poll
         if form.enable_poll.data:
