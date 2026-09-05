@@ -117,6 +117,10 @@ def create_article(data: dict, author_id: int) -> Article:
 
 def update_article(article: Article, data: dict) -> Article:
     """Update an article's fields and tags."""
+    for fk in ['category_id', 'house_id', 'club_id', 'special_edition_id']:
+        if fk in data and (data[fk] == 0 or data[fk] == '0' or data[fk] == ''):
+            data[fk] = None
+
     for field in [
         "title", "excerpt", "body", "featured_image", "featured_image_alt",
         "image_caption", "youtube_video_id", "special_edition_id", "category_id", "content_type", "is_campus",
