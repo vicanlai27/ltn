@@ -1,13 +1,57 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, abort, current_app, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, jsonify, redirect, render_template, request, url_for
+from flask_login import login_required
 
 from app.models.media import Gallery, GalleryImage, PodcastEpisode, Video
-from app.services import youtube_service
-from app.services.storage_service import get_public_url
+from app.services import media_service
+from app.services.storage_service import get_public_url, StorageError
 from app.utils.security import ensure_aware
 
 media_bp = Blueprint("media", __name__)
+
+
+# === Direct-to-Supabase upload (bypasses Vercel's 4.5MB request cap) ===
+
+@media_bp.route("/media/sign-upload", methods=["POST"])
+@login_required
+def sign_upload():
+    payload = request.get_json(silent=True) or {}
+    filename = (payload.get("filename") or "").strip()
+    subfolder = (payload.get("subfolder") or "images").strip()
+
+    if subfolder not in ("articles", "audio", "gallery"):
+        return jsonify({"error": "Invalid subfolder"}), 400
+    if not filename:
+        return jsonify({"error": "filename is required"}), 400
+
+    try:
+        result = media_service.request_signed_upload(filename, subfolder)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except StorageError as e:
+        current_app.logger.error(f"sign_upload failed for {filename}: {e}")
+        return jsonify({"error": "Could not prepare upload"}), 502
+
+    return jsonify(result)
+
+
+@media_bp.route("/media/finalize-upload", methods=["POST"])
+@login_required
+def finalize_upload_route():
+    payload = request.get_json(silent=True) or {}
+    key = (payload.get("key") or "").strip()
+
+    if not key:
+        return jsonify({"error": "key is required"}), 400
+
+    try:
+        result = media_service.finalize_upload(key)
+    except StorageError as e:
+        current_app.logger.error(f"finalize_upload failed for {key}: {e}")
+        return jsonify({"error": "Could not finalize upload"}), 502
+
+    return jsonify(result)
 
 
 # === Media Hub ===

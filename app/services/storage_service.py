@@ -124,6 +124,33 @@ def delete_prefix(prefix: str) -> None:
         )
 
 
+def create_signed_upload_url(key: str, upsert: bool = False) -> dict:
+    """
+    Ask Supabase for a one-time signed URL the BROWSER can upload directly
+    to, bypassing our own serverless function entirely (Vercel caps request
+    bodies at 4.5MB regardless of MAX_CONTENT_LENGTH; this sidesteps that).
+
+    Returns {"key": key, "upload_url": <absolute PUT url>}. The token is
+    valid for a couple of hours per Supabase's docs.
+    """
+    url = f"{_base_url()}/storage/v1/object/upload/sign/{_bucket()}/{key}"
+    resp = requests.post(
+        url,
+        headers=_auth_headers("application/json"),
+        json={"upsert": upsert} if upsert else {},
+        timeout=15,
+    )
+    if resp.status_code not in (200, 201):
+        raise StorageError(f"Could not create signed upload URL for '{key}': {resp.status_code} {resp.text}")
+
+    data = resp.json()
+    relative = data.get("url", "")
+    if not relative:
+        raise StorageError(f"Signed upload response for '{key}' had no 'url' field: {data}")
+
+    return {"key": key, "upload_url": f"{_base_url()}/storage/v1{relative}"}
+
+
 def get_public_url(key: str) -> str:
     """Build the public CDN URL for an object key.
 

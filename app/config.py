@@ -53,7 +53,12 @@ class Config:
     # tells the server how to convert that local time to UTC for storage
     # (and back again for display) instead of misreading it as UTC.
     SITE_TIMEZONE = os.environ.get("SITE_TIMEZONE", "Africa/Kampala")
-    MAX_CONTENT_LENGTH = int(os.environ.get("MAX_CONTENT_LENGTH", 100 * 1024 * 1024))
+    # Vercel serverless functions hard-cap request bodies at 4.5MB regardless
+    # of this setting -- keep it under that so Flask (validate_upload) gives
+    # a clean error instead of Vercel silently 413ing before we run. Real
+    # uploads should go through the direct-to-Supabase flow instead, which
+    # isn't subject to this cap at all.
+    MAX_CONTENT_LENGTH = int(os.environ.get("MAX_CONTENT_LENGTH", 4 * 1024 * 1024))
     ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
     ALLOWED_VIDEO_EXTENSIONS = {"mp4", "webm"}
     ALLOWED_AUDIO_EXTENSIONS = {"mp3", "m4a", "ogg", "wav", "webm"}

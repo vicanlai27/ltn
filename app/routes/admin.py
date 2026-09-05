@@ -120,14 +120,22 @@ def articles_new():
         data = form.data.copy()
         data["special_edition_id"] = data.get("special_edition_id") or None
 
-        # Handle image upload
+        # Handle image upload -- prefer the key from a direct-to-Supabase
+        # upload (bypasses Vercel's 4.5MB request cap); fall back to the
+        # old server-side path if JS didn't run or the field is unused.
+        image_key = (data.get("featured_image_key") or "").strip()
         image = form.featured_image.data
-
-        if image and hasattr(image, "filename") and image.filename:
+        if image_key:
+            data["featured_image"] = image_key
+        elif image and hasattr(image, "filename") and image.filename:
             data["featured_image"] = save_upload(image, "articles")
 
-        # Handle audio upload
-        if form.audio_file.data and form.audio_file.data.filename:
+        # Handle audio upload -- same direct-upload-first pattern
+        audio_key = (data.get("audio_key") or "").strip()
+        if audio_key:
+            data["audio_url"] = audio_key
+            data["audio_duration"] = int(data["audio_duration_hint"]) if (data.get("audio_duration_hint") or "").isdigit() else None
+        elif form.audio_file.data and form.audio_file.data.filename:
             audio_path = save_upload(form.audio_file.data, "audio")
             data["audio_url"] = audio_path
             from app.services.media_service import get_audio_duration
@@ -238,19 +246,29 @@ def articles_edit(article_id):
         data = form.data.copy()
         data["special_edition_id"] = data.get("special_edition_id") or None
 
-        # Handle image upload
+        # Handle image upload -- prefer the key from a direct-to-Supabase
+        # upload; fall back to the old server-side path if JS didn't run.
+        image_key = (data.get("featured_image_key") or "").strip()
         image = form.featured_image.data
-
-        if image and hasattr(image, "filename") and image.filename:
+        if image_key:
             if article.featured_image:
                 delete_upload(article.featured_image)
-
+            data["featured_image"] = image_key
+        elif image and hasattr(image, "filename") and image.filename:
+            if article.featured_image:
+                delete_upload(article.featured_image)
             data["featured_image"] = save_upload(image, "articles")
         else:
             data["featured_image"] = article.featured_image
 
-        # Handle audio upload
-        if form.audio_file.data and form.audio_file.data.filename:
+        # Handle audio upload -- same direct-upload-first pattern
+        audio_key = (data.get("audio_key") or "").strip()
+        if audio_key:
+            if article.audio_url:
+                delete_upload(article.audio_url)
+            data["audio_url"] = audio_key
+            data["audio_duration"] = int(data["audio_duration_hint"]) if (data.get("audio_duration_hint") or "").isdigit() else None
+        elif form.audio_file.data and form.audio_file.data.filename:
             if article.audio_url:
                 delete_upload(article.audio_url)
             audio_path = save_upload(form.audio_file.data, "audio")

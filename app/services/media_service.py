@@ -1,4 +1,5 @@
 import os
+import uuid
 from datetime import datetime, timezone
 from io import BytesIO
 
@@ -32,6 +33,46 @@ def validate_upload(upload) -> tuple[bool, str]:
         return False, f"File too large (max {max_size // (1024*1024)}MB)"
 
     return True, ""
+
+
+def build_upload_key(filename: str, subfolder: str) -> str:
+    """Build a storage key using the same {subfolder}/{YYYY}/{MM}/{uuid}.{ext}
+    convention as save_upload, without needing the file bytes in hand."""
+    ext = os.path.splitext(filename)[1].lower().lstrip(".")
+    if ext not in ALLOWED_EXT:
+        raise ValueError(f"File type .{ext} not allowed")
+
+    now = datetime.now(timezone.utc)
+    date_path = f"{now.year}/{now.month:02d}"
+    return f"{subfolder}/{date_path}/{uuid.uuid4().hex}.{ext}"
+
+
+def request_signed_upload(filename: str, subfolder: str = "images") -> dict:
+    """Step 1 of the direct-to-Supabase flow: mint a key + signed PUT URL
+    the browser can upload straight to, without the bytes ever touching
+    our serverless function."""
+    key = build_upload_key(filename, subfolder)
+    result = storage_service.create_signed_upload_url(key)
+    return result
+
+
+def finalize_upload(key: str) -> dict:
+    """Step 2, called after the browser's direct PUT succeeds. Downloads
+    the file back from Supabase (an outbound fetch our function makes
+    itself -- not subject to Vercel's inbound 4.5MB request cap) so we can
+    still generate thumbnails / read audio duration exactly as before."""
+    ext = os.path.splitext(key)[1].lower().lstrip(".")
+
+    result = {"key": key}
+    if ext in ALLOWED_IMAGE_EXT:
+        # download once here; get_audio_duration does its own fetch on the
+        # audio branch so we don't want to duplicate that download there
+        data = storage_service.download_bytes(key)
+        _generate_thumbnails(key, data)
+    elif ext in ALLOWED_AUDIO_EXT:
+        result["audio_duration"] = get_audio_duration(key)
+
+    return result
 
 
 def save_upload(upload, subfolder: str = "images") -> str:

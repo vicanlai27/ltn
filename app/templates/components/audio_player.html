@@ -3,13 +3,13 @@
   Expects: audio_url (str), title (str, optional), accent_color (str, optional)
 #}
 {% set player_id = 'audio-' ~ (audio_url|hash) %}
-{% set audio_file = audio_url.replace('static/', '', 1) if audio_url.startswith('static/') else audio_url %}
+data-src="{{ audio_url if audio_url.startswith('http') else media_url(audio_url) }}"
 
 <div
     class="audio-player"
     id="{{ player_id }}"
     data-audio-player
-    data-src="{% if audio_file.startswith('http://') or audio_file.startswith('https://') %}{{ audio_file }}{% else %}{{ url_for('static', filename=audio_file) }}{% endif %}"
+    data-src="{{ audio_url if audio_url.startswith('http') else media_url(audio_url) }}"
 >
     <button class="audio-player__play" data-audio-play aria-label="Play">
         <svg class="audio-player__icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>

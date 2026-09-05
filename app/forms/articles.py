@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField, TextAreaField, SelectField, BooleanField,
-    SubmitField, DateTimeLocalField, MultipleFileField,
+    SubmitField, DateTimeLocalField, MultipleFileField, HiddenField,
 )
 from wtforms.validators import DataRequired, Length, Optional
 
@@ -16,6 +16,7 @@ class ArticleForm(FlaskForm):
     featured_image = FileField("Featured Image", validators=[
         FileAllowed(["jpg", "jpeg", "png", "webp"], "Images only!")
     ])
+    featured_image_key = HiddenField()  # set by JS after a successful direct-to-Supabase upload
     featured_image_alt = StringField("Image Alt Text", validators=[Optional(), Length(max=255)])
     image_caption = StringField("Image Caption", validators=[Optional(), Length(max=255)])
     gallery_images = MultipleFileField("Additional Images", validators=[
@@ -41,6 +42,8 @@ class ArticleForm(FlaskForm):
     audio_file = FileField("Audio Narration", validators=[
         FileAllowed(["mp3", "m4a", "ogg", "wav", "webm"], "Audio files only!")
     ])
+    audio_key = HiddenField()  # set by JS after a successful direct-to-Supabase upload
+    audio_duration_hint = HiddenField()  # duration computed server-side during finalize
     # Campus fields
     is_campus = BooleanField("Campus Story")
     campus_section = SelectField("Campus Section", choices=[

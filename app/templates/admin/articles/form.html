@@ -154,7 +154,7 @@
     {% if editing %}Edit: {{ article.title|truncate(50) }}{% else %}New Article{% endif %}
 </h1>
 
-<form method="POST" enctype="multipart/form-data">
+<form method="POST" enctype="multipart/form-data" id="article-form">
     {{ form.hidden_tag() }}
 
     <div class="card" style="margin-bottom: 24px;">
@@ -201,6 +201,7 @@
         <div class="form-group">
             {{ form.featured_image.label }}
             {{ form.featured_image(class="form-control") }}
+            {{ form.featured_image_key(id="featured-image-key") }}
             {% if editing and article.featured_image %}
                 <div style="margin-top: 12px;">
                     <img src="{{ media_url(article.featured_image) }}" alt="" style="max-width: 300px; border-radius: var(--radius);">
@@ -497,6 +498,8 @@
         </p>
 
         {{ form.audio_file(id="audio-file-input", style="display:none;", accept="audio/*") }}
+        {{ form.audio_key(id="audio-key") }}
+        {{ form.audio_duration_hint(id="audio-duration-hint") }}
 
         <div style="display: flex; gap: 8px; margin-bottom: 16px;">
             <button type="button" id="audio-tab-upload" class="btn btn-secondary audio-tab-btn">📁 Upload File</button>
@@ -536,6 +539,8 @@
         {% endif %}
     </div>
 
+    <div id="direct-upload-status" class="text-muted" style="display:none; font-size: 13px; margin: 0 0 12px;"></div>
+
     <div style="display: flex; gap: 12px; margin-top: 24px;">
         <button type="submit" name="submit" value="1" class="btn btn-secondary">Save Draft</button>
         {% if not editing or article.status in ['draft', 'rejected'] %}
@@ -550,6 +555,78 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/direct-upload.js') }}"></script>
+<script>
+(function () {
+    var form = document.getElementById('article-form');
+    if (!form) return;
+
+    var imageInput = document.getElementById('featured_image');
+    var imageKeyField = document.getElementById('featured-image-key');
+    var audioInput = document.getElementById('audio-file-input');
+    var audioKeyField = document.getElementById('audio-key');
+    var audioDurationField = document.getElementById('audio-duration-hint');
+    var statusEl = document.getElementById('direct-upload-status');
+    var readyToSubmit = false;
+
+    function setStatus(text) {
+        if (!statusEl) return;
+        if (text) {
+            statusEl.textContent = text;
+            statusEl.style.display = 'block';
+        } else {
+            statusEl.style.display = 'none';
+        }
+    }
+
+    form.addEventListener('submit', function (e) {
+        if (readyToSubmit) return; // this is our own follow-up submit; let it through
+
+        var hasImage = imageInput && imageInput.files && imageInput.files.length > 0;
+        var hasAudio = audioInput && audioInput.files && audioInput.files.length > 0;
+        if (!hasImage && !hasAudio) return; // nothing new to upload, submit normally
+
+        e.preventDefault();
+
+        var tasks = [];
+        if (hasImage) {
+            setStatus('Uploading image…');
+            tasks.push(
+                DirectUpload.uploadFile(imageInput.files[0], 'articles').then(function (result) {
+                    imageKeyField.value = result.key;
+                    imageInput.removeAttribute('name'); // don't also re-send the raw bytes
+                })
+            );
+        }
+        if (hasAudio) {
+            setStatus('Uploading audio…');
+            tasks.push(
+                DirectUpload.uploadFile(audioInput.files[0], 'audio').then(function (result) {
+                    audioKeyField.value = result.key;
+                    if (result.audio_duration) {
+                        audioDurationField.value = result.audio_duration;
+                    }
+                    audioInput.removeAttribute('name');
+                })
+            );
+        }
+
+        Promise.all(tasks)
+            .then(function () {
+                setStatus('');
+                readyToSubmit = true;
+                if (form.requestSubmit) {
+                    form.requestSubmit(e.submitter || undefined);
+                } else {
+                    form.submit();
+                }
+            })
+            .catch(function (err) {
+                setStatus('Upload failed: ' + err.message + ' -- please try again.');
+            });
+    });
+})();
+</script>
 <script type="module">
 (async function() {
     var sourceField = document.getElementById('body');
