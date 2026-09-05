@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="supabase-url" content="{{ config.SUPABASE_URL }}">
+    <meta name="supabase-anon-key" content="{{ config.SUPABASE_ANON_KEY }}">
+    <meta name="supabase-bucket" content="{{ config.SUPABASE_STORAGE_BUCKET }}">
         <!-- Critical CSS inlined for fast LCP -->
     <style id="critical-css">{{ critical_css|safe }}</style>
 

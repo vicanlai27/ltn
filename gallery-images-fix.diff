@@ -1,0 +1,124 @@
+diff --git a/app/forms/articles.py b/app/forms/articles.py
+index d4e5e22..3fcd662 100644
+--- a/app/forms/articles.py
++++ b/app/forms/articles.py
+@@ -22,6 +22,7 @@ class ArticleForm(FlaskForm):
+     gallery_images = MultipleFileField("Additional Images", validators=[
+         Optional(), FileAllowed(["jpg", "jpeg", "png", "webp"], "Images only!")
+     ])
++    gallery_image_keys = HiddenField()  # comma-separated keys set by JS after direct-to-Supabase uploads
+     youtube_video_id = StringField("YouTube Video ID", validators=[Optional()])
+     youtube_video_url = StringField("Or paste a YouTube link/ID directly", validators=[Optional()])
+     category_id = SelectField("Category", coerce=int, validators=[Optional()])
+diff --git a/app/routes/admin.py b/app/routes/admin.py
+index 2c99343..c3a6f52 100644
+--- a/app/routes/admin.py
++++ b/app/routes/admin.py
+@@ -151,14 +151,20 @@ def articles_new():
+ 
+         article = create_article(data, current_user.id)
+ 
+-        # Additional gallery images (beyond the single featured image)
+-        gallery_uploads = [
+-            f for f in (form.gallery_images.data or [])
+-            if f and hasattr(f, "filename") and f.filename
+-        ]
+-        if gallery_uploads:
+-            saved_paths = [save_upload(f, "articles") for f in gallery_uploads]
+-            add_gallery_images(article, saved_paths)
++        # Additional gallery images (beyond the single featured image) --
++        # prefer keys from direct-to-Supabase uploads; fall back to the old
++        # server-side path if JS didn't run for this field.
++        gallery_keys_raw = (data.get("gallery_image_keys") or "").strip()
++        if gallery_keys_raw:
++            add_gallery_images(article, [k.strip() for k in gallery_keys_raw.split(",") if k.strip()])
++        else:
++            gallery_uploads = [
++                f for f in (form.gallery_images.data or [])
++                if f and hasattr(f, "filename") and f.filename
++            ]
++            if gallery_uploads:
++                saved_paths = [save_upload(f, "articles") for f in gallery_uploads]
++                add_gallery_images(article, saved_paths)
+ 
+         # Poll
+         if form.enable_poll.data:
+@@ -290,14 +296,20 @@ def articles_edit(article_id):
+ 
+         update_article(article, data)
+ 
+-        # Additional gallery images (beyond the single featured image)
+-        gallery_uploads = [
+-            f for f in (form.gallery_images.data or [])
+-            if f and hasattr(f, "filename") and f.filename
+-        ]
+-        if gallery_uploads:
+-            saved_paths = [save_upload(f, "articles") for f in gallery_uploads]
+-            add_gallery_images(article, saved_paths)
++        # Additional gallery images (beyond the single featured image) --
++        # prefer keys from direct-to-Supabase uploads; fall back to the old
++        # server-side path if JS didn't run for this field.
++        gallery_keys_raw = (data.get("gallery_image_keys") or "").strip()
++        if gallery_keys_raw:
++            add_gallery_images(article, [k.strip() for k in gallery_keys_raw.split(",") if k.strip()])
++        else:
++            gallery_uploads = [
++                f for f in (form.gallery_images.data or [])
++                if f and hasattr(f, "filename") and f.filename
++            ]
++            if gallery_uploads:
++                saved_paths = [save_upload(f, "articles") for f in gallery_uploads]
++                add_gallery_images(article, saved_paths)
+ 
+         # Poll
+         if form.enable_poll.data:
+diff --git a/app/templates/admin/articles/form.html b/app/templates/admin/articles/form.html
+index 154d585..9929c1c 100644
+--- a/app/templates/admin/articles/form.html
++++ b/app/templates/admin/articles/form.html
+@@ -344,6 +344,7 @@
+         <div class="form-group">
+             {{ form.gallery_images.label }}
+             {{ form.gallery_images(class="form-control", multiple=true) }}
++            {{ form.gallery_image_keys(id="gallery-image-keys") }}
+             <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                 Optional — add as many extra images as you like. Readers will be able to
+                 navigate through the featured image plus these while reading the story.
+@@ -566,6 +567,8 @@
+     var audioInput = document.getElementById('audio-file-input');
+     var audioKeyField = document.getElementById('audio-key');
+     var audioDurationField = document.getElementById('audio-duration-hint');
++    var galleryInput = document.getElementById('gallery_images');
++    var galleryKeysField = document.getElementById('gallery-image-keys');
+     var statusEl = document.getElementById('direct-upload-status');
+     var readyToSubmit = false;
+ 
+@@ -584,7 +587,8 @@
+ 
+         var hasImage = imageInput && imageInput.files && imageInput.files.length > 0;
+         var hasAudio = audioInput && audioInput.files && audioInput.files.length > 0;
+-        if (!hasImage && !hasAudio) return; // nothing new to upload, submit normally
++        var hasGallery = galleryInput && galleryInput.files && galleryInput.files.length > 0;
++        if (!hasImage && !hasAudio && !hasGallery) return; // nothing new to upload, submit normally
+ 
+         e.preventDefault();
+ 
+@@ -610,6 +614,18 @@
+                 })
+             );
+         }
++        if (hasGallery) {
++            var galleryFiles = Array.prototype.slice.call(galleryInput.files);
++            setStatus('Uploading ' + galleryFiles.length + ' image' + (galleryFiles.length === 1 ? '' : 's') + '…');
++            tasks.push(
++                Promise.all(galleryFiles.map(function (file) {
++                    return DirectUpload.uploadFile(file, 'articles');
++                })).then(function (results) {
++                    galleryKeysField.value = results.map(function (r) { return r.key; }).join(',');
++                    galleryInput.removeAttribute('name'); // don't also re-send the raw bytes
++                })
++            );
++        }
+ 
+         Promise.all(tasks)
+             .then(function () {

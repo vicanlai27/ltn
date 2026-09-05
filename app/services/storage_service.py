@@ -126,12 +126,20 @@ def delete_prefix(prefix: str) -> None:
 
 def create_signed_upload_url(key: str, upsert: bool = False) -> dict:
     """
-    Ask Supabase for a one-time signed URL the BROWSER can upload directly
-    to, bypassing our own serverless function entirely (Vercel caps request
+    Ask Supabase for a one-time signed upload token. The BROWSER then uses
+    this with the supabase-js SDK's uploadToSignedUrl() to upload directly,
+    bypassing our own serverless function entirely (Vercel caps request
     bodies at 4.5MB regardless of MAX_CONTENT_LENGTH; this sidesteps that).
 
-    Returns {"key": key, "upload_url": <absolute PUT url>}. The token is
-    valid for a couple of hours per Supabase's docs.
+    We hand back the raw token (not a hand-built URL) because a raw
+    fetch() PUT to this endpoint is a known rough edge -- browsers must
+    preflight cross-origin PUTs, and that preflight has been reported to
+    fail against this endpoint from arbitrary origins (see
+    github.com/supabase/supabase-js/issues/1662). supabase-js's own
+    client is the maintained, tested way to call it.
+
+    Returns {"key": key, "token": token}. The token is valid for a
+    couple of hours per Supabase's docs.
     """
     url = f"{_base_url()}/storage/v1/object/upload/sign/{_bucket()}/{key}"
     resp = requests.post(
@@ -148,7 +156,12 @@ def create_signed_upload_url(key: str, upsert: bool = False) -> dict:
     if not relative:
         raise StorageError(f"Signed upload response for '{key}' had no 'url' field: {data}")
 
-    return {"key": key, "upload_url": f"{_base_url()}/storage/v1{relative}"}
+    from urllib.parse import urlparse, parse_qs
+    token = parse_qs(urlparse(relative).query).get("token", [None])[0]
+    if not token:
+        raise StorageError(f"Signed upload response for '{key}' had no token: {data}")
+
+    return {"key": key, "token": token}
 
 
 def get_public_url(key: str) -> str:

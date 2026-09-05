@@ -1,0 +1,83 @@
+diff --git a/app/config.py b/app/config.py
+index 7d8496f..151f6db 100644
+--- a/app/config.py
++++ b/app/config.py
+@@ -46,6 +46,9 @@ class Config:
+     # Supabase Storage (required in production; see .env.example)
+     SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+     SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
++    # Public by design (protected by RLS, not secrecy) -- safe to expose to
++    # the browser so it can call supabase-js directly for signed uploads.
++    SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
+     SUPABASE_STORAGE_BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "media")
+ 
+     # Timezone editors are physically in. Admin "Publish At" datetime-local
+diff --git a/app/services/storage_service.py b/app/services/storage_service.py
+index eef8779..da7f107 100644
+--- a/app/services/storage_service.py
++++ b/app/services/storage_service.py
+@@ -126,12 +126,20 @@ def delete_prefix(prefix: str) -> None:
+ 
+ def create_signed_upload_url(key: str, upsert: bool = False) -> dict:
+     """
+-    Ask Supabase for a one-time signed URL the BROWSER can upload directly
+-    to, bypassing our own serverless function entirely (Vercel caps request
++    Ask Supabase for a one-time signed upload token. The BROWSER then uses
++    this with the supabase-js SDK's uploadToSignedUrl() to upload directly,
++    bypassing our own serverless function entirely (Vercel caps request
+     bodies at 4.5MB regardless of MAX_CONTENT_LENGTH; this sidesteps that).
+ 
+-    Returns {"key": key, "upload_url": <absolute PUT url>}. The token is
+-    valid for a couple of hours per Supabase's docs.
++    We hand back the raw token (not a hand-built URL) because a raw
++    fetch() PUT to this endpoint is a known rough edge -- browsers must
++    preflight cross-origin PUTs, and that preflight has been reported to
++    fail against this endpoint from arbitrary origins (see
++    github.com/supabase/supabase-js/issues/1662). supabase-js's own
++    client is the maintained, tested way to call it.
++
++    Returns {"key": key, "token": token}. The token is valid for a
++    couple of hours per Supabase's docs.
+     """
+     url = f"{_base_url()}/storage/v1/object/upload/sign/{_bucket()}/{key}"
+     resp = requests.post(
+@@ -148,7 +156,12 @@ def create_signed_upload_url(key: str, upsert: bool = False) -> dict:
+     if not relative:
+         raise StorageError(f"Signed upload response for '{key}' had no 'url' field: {data}")
+ 
+-    return {"key": key, "upload_url": f"{_base_url()}/storage/v1{relative}"}
++    from urllib.parse import urlparse, parse_qs
++    token = parse_qs(urlparse(relative).query).get("token", [None])[0]
++    if not token:
++        raise StorageError(f"Signed upload response for '{key}' had no token: {data}")
++
++    return {"key": key, "token": token}
+ 
+ 
+ def get_public_url(key: str) -> str:
+diff --git a/app/templates/admin/articles/form.html b/app/templates/admin/articles/form.html
+index 9929c1c..bd329ea 100644
+--- a/app/templates/admin/articles/form.html
++++ b/app/templates/admin/articles/form.html
+@@ -556,6 +556,7 @@
+ {% endblock %}
+ 
+ {% block extra_scripts %}
++<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ <script src="{{ url_for('static', filename='js/direct-upload.js') }}"></script>
+ <script>
+ (function () {
+diff --git a/app/templates/layouts/base.html b/app/templates/layouts/base.html
+index f18cf4f..385e9d7 100644
+--- a/app/templates/layouts/base.html
++++ b/app/templates/layouts/base.html
+@@ -4,6 +4,9 @@
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <meta name="csrf-token" content="{{ csrf_token() }}">
++    <meta name="supabase-url" content="{{ config.SUPABASE_URL }}">
++    <meta name="supabase-anon-key" content="{{ config.SUPABASE_ANON_KEY }}">
++    <meta name="supabase-bucket" content="{{ config.SUPABASE_STORAGE_BUCKET }}">
+         <!-- Critical CSS inlined for fast LCP -->
+     <style id="critical-css">{{ critical_css|safe }}</style>
+ 

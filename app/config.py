@@ -46,6 +46,9 @@ class Config:
     # Supabase Storage (required in production; see .env.example)
     SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
     SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    # Public by design (protected by RLS, not secrecy) -- safe to expose to
+    # the browser so it can call supabase-js directly for signed uploads.
+    SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
     SUPABASE_STORAGE_BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "media")
 
     # Timezone editors are physically in. Admin "Publish At" datetime-local
